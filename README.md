@@ -28,6 +28,24 @@ In development each app proxies `/api` to the backend set by `API_PROXY_TARGET`
 A storefront is picked from the hostname: `mystore.localhost:5174` in dev,
 `mystore.<VITE_PLATFORM_DOMAIN>` in production. `?store=mystore` also works.
 
+## Deploy (Vercel)
+
+Create **two Vercel projects** from this repo — one per app:
+
+| Project | Root Directory | Environment variables |
+|---|---|---|
+| admin | `apps/admin` | `VITE_STOREFRONT_ORIGIN=https://<storefront domain>`, `VITE_PLATFORM_DOMAIN=<root domain>` (once you have one), `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET`, `VITE_CLOUDINARY_API_KEY` |
+| storefront | `apps/storefront` | `VITE_ADMIN_ORIGIN=https://<admin domain>`, `VITE_PLATFORM_DOMAIN=<root domain>` (once you have one) |
+
+Leave `VITE_API_URL` empty: each app's `vercel.json` rewrites `/api/*` to the
+Render backend (same as the dev proxy), so no CORS changes are needed. Vercel
+detects the npm workspace and installs from the repo root.
+
+Store subdomains (`mystore.<root domain>`) need a custom domain on the
+storefront project with a wildcard `*.<root domain>` entry (Vercel requires its
+nameservers for wildcard domains). Until then, stores open at
+`https://<storefront>.vercel.app/?store=<slug>`.
+
 ## Store wizard & designer
 
 - `/start` — 4-step wizard (name + address, industry, template + colour,
