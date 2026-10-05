@@ -52,12 +52,12 @@ function Editor({ store }: { store: PlatformStore }) {
   // ── Save / publish ──
   const save = useMutation({
     mutationFn: (t: Theme) => api<PlatformStore>(`/api/platform/stores/${store.id}/`, { method: 'PATCH', auth: true, body: { theme: t } }),
-    onSuccess: (_, t) => { editor.markSaved(t); qc.invalidateQueries({ queryKey: ['my-store'] }); toast.success('Design saved — your store is updated'); },
+    onSuccess: (_, t) => { editor.markSaved(t); qc.invalidateQueries({ queryKey: ['my-stores'] }); toast.success('Design saved — your store is updated'); },
     onError: e => toast.error(e instanceof ApiError ? e.message : 'Could not save. Please try again.'),
   });
   const publish = useMutation({
     mutationFn: (published: boolean) => api<PlatformStore>(`/api/platform/stores/${store.id}/`, { method: 'PATCH', auth: true, body: { published } }),
-    onSuccess: s => { qc.invalidateQueries({ queryKey: ['my-store'] }); toast.success(s.published ? 'Store is live' : 'Store hidden — visitors see "Coming soon"'); },
+    onSuccess: s => { qc.invalidateQueries({ queryKey: ['my-stores'] }); toast.success(s.published ? 'Store is live' : 'Store hidden — visitors see "Coming soon"'); },
   });
   const doSave = useCallback(() => { if (editor.dirty && !save.isPending) save.mutate(theme); }, [editor.dirty, save, theme]);
 

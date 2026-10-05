@@ -1,10 +1,10 @@
-import { useState, type ReactNode } from 'react';
-import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useMyStore, storefrontUrl } from '../platform';
+import { useMyStore, useMyStores, useSwitchStore, storefrontUrl } from '../platform';
 import {
   LayoutDashboard, Package, ShoppingCart, Palette, Globe, CreditCard, Settings,
-  LogOut, Menu, X, Store, ExternalLink, Loader2,
+  LogOut, Menu, X, Store, ExternalLink, Loader2, ChevronsUpDown, Check, Plus,
 } from 'lucide-react';
 import { api } from '@cp/shared';
 import { Button, cn } from '@cp/ui';
@@ -63,22 +63,76 @@ export function RequireStore({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const { user, signOut } = useAuth();
+/** Store name + switcher (a merchant can run several stores). */
+function StoreSwitcher({ onNavigate }: { onNavigate?: () => void }) {
   const { data: store } = useMyStore();
-  const name = store?.name ?? '';
+  const { data: stores = [] } = useMyStores();
+  const switchStore = useSwitchStore();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc); };
+  }, [open]);
 
   return (
-    <div className="flex h-full flex-col border-r border-border/60 bg-card">
-      <div className="flex h-16 items-center gap-3 border-b border-border/60 px-4">
+    <div ref={ref} className="relative border-b border-border/60 p-2">
+      <button type="button" onClick={() => setOpen(o => !o)} aria-haspopup="menu" aria-expanded={open}
+        className="flex h-12 w-full items-center gap-3 rounded-lg px-2 text-left hover:bg-muted/70">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-foreground shadow-sm">
           <Store className="h-4 w-4" />
         </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold tracking-tight">{name || 'Your store'}</p>
-          <p className="text-xs text-muted-foreground">Store Builder</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold tracking-tight">{store?.name || 'Your store'}</p>
+          <p className="text-xs text-muted-foreground">{stores.length > 1 ? `${stores.length} stores` : 'Store Builder'}</p>
         </div>
-      </div>
+        <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </button>
+      {open && (
+        <div role="menu" className="absolute inset-x-2 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border/70 bg-card shadow-xl">
+          <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80">Your stores</p>
+          <ul className="max-h-64 overflow-y-auto p-1">
+            {stores.map(s => (
+              <li key={s.id}>
+                <button type="button" role="menuitem"
+                  onClick={() => { switchStore(s.id); setOpen(false); onNavigate?.(); navigate('/'); }}
+                  className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-muted">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-semibold">{s.name.charAt(0).toUpperCase()}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{s.name}</span>
+                    <span className="block truncate text-xs text-muted-foreground">/@{s.slug}</span>
+                  </span>
+                  {s.id === store?.id && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="border-t border-border/60 p-1">
+            <Link to="/start?new=1" role="menuitem" onClick={() => { setOpen(false); onNavigate?.(); }}
+              className="flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium hover:bg-muted">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-dashed border-border"><Plus className="h-4 w-4" /></span>
+              Create another store
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const { user, signOut } = useAuth();
+  const { data: store } = useMyStore();
+
+  return (
+    <div className="flex h-full flex-col border-r border-border/60 bg-card">
+      <StoreSwitcher onNavigate={onNavigate} />
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4" aria-label="Main">
         {NAV.map(group => (

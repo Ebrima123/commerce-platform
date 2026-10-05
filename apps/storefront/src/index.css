@@ -1,1 +1,24 @@
 @import '@cp/ui/base.css';
+
+@layer utilities {
+  /* Sections fade up gently as they scroll into view (see useReveal). */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity 700ms cubic-bezier(.2,.7,.2,1), transform 700ms cubic-bezier(.2,.7,.2,1); }
+  .reveal.is-visible { opacity: 1; transform: none; }
+
+  /* Images fade in once loaded instead of popping in. */
+  .img-fade { opacity: 0; transition: opacity 500ms ease; }
+  .img-fade.is-loaded { opacity: 1; }
+
+  /* Slow, subtle zoom on hero photos. */
+  @keyframes hero-zoom { from { transform: scale(1.06); } to { transform: scale(1); } }
+  .hero-zoom { animation: hero-zoom 1600ms cubic-bezier(.2,.7,.2,1) both; }
+
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .reveal.is-visible { opacity: 1; transform: none; transition: none; }
+    .img-fade { opacity: 1; transition: none; }
+    .hero-zoom { animation: none; }
+  }
+}

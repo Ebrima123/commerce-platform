@@ -18,10 +18,16 @@ export class ApiError extends Error {
 
 type Options = { method?: string; body?: unknown; auth?: boolean; signal?: AbortSignal };
 
+// Which Store Builder store authenticated requests act on (a merchant can run
+// several). Sent as X-Store-Id; the backend scopes products/orders/stats to it.
+let currentStoreId: string | null = null;
+export const setApiStoreId = (id: string | null) => { currentStoreId = id; };
+
 async function send(path: string, { method = 'GET', body, auth = false, signal }: Options, token?: string | null) {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (auth && token) headers.Authorization = `Bearer ${token}`;
+  if (auth && currentStoreId) headers['X-Store-Id'] = currentStoreId;
   return fetch(apiUrl(path), { method, headers, signal, body: body === undefined ? undefined : JSON.stringify(body) });
 }
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, ArrowRight, Check, Loader2, Shirt, Smartphone, Flower2, ShoppingBasket, Sofa, Store,
@@ -11,7 +11,7 @@ import {
 } from '@cp/shared';
 import { Button, Card, Input, Label, cn } from '@cp/ui';
 import { useAuth } from '../auth';
-import { useMyStore, storeAddressParts } from '../platform';
+import { useMyStore, selectStoreId, storeAddressParts } from '../platform';
 
 const INDUSTRY_ICONS: Record<string, LucideIcon> = {
   shirt: Shirt, smartphone: Smartphone, flower: Flower2, 'shopping-basket': ShoppingBasket, sofa: Sofa, store: Store,
@@ -127,6 +127,9 @@ export default function StartPage() {
   const qc = useQueryClient();
   const { user, loading: authLoading, signUp } = useAuth();
   const { data: existing, isLoading: storeLoading } = useMyStore();
+  // /start?new=1 — an existing merchant opening another store.
+  const [params] = useSearchParams();
+  const addingAnother = params.get('new') === '1';
 
   const [step, setStep] = useState<Step>('name');
   const [name, setName] = useState('');
@@ -155,7 +158,7 @@ export default function StartPage() {
   if (authLoading || (user && storeLoading)) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   }
-  if (existing && step !== 'creating') return <Navigate to="/design" replace />;
+  if (existing && !addingAnother && step !== 'creating') return <Navigate to="/design" replace />;
 
   const steps: Step[] = user ? ['name', 'industry', 'look'] : ['name', 'industry', 'look', 'account'];
   const stepIndex = steps.indexOf(step);
@@ -165,12 +168,14 @@ export default function StartPage() {
     setErrors({});
     try {
       const theme = generateTheme({ storeName: name.trim(), industry: industry ?? 'general', template, primaryColor: color });
-      await api<PlatformStore>('/api/platform/stores/', {
+      const created = await api<PlatformStore>('/api/platform/stores/', {
         method: 'POST', auth: true,
         body: { name: name.trim(), slug, industry: industry ?? 'general', theme, whatsapp: whatsapp.trim() },
       });
-      await qc.invalidateQueries({ queryKey: ['my-store'] });
-      navigate('/design?welcome=1', { replace: true });
+      selectStoreId(created.id);
+      qc.removeQueries({ predicate: q => q.queryKey[0] !== 'my-stores' });
+      await qc.invalidateQueries({ queryKey: ['my-stores'] });
+      navigate('/?welcome=1', { replace: true });
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : 'Could not create your store. Please try again.';
       const field = e instanceof ApiError && (e.body as { field?: string } | null)?.field;
@@ -218,7 +223,8 @@ export default function StartPage() {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-brand-foreground"><Store className="h-4 w-4" /></span>
           Store Builder
         </Link>
-        {!user && <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground">Sign in</Link>}
+        {!user ? <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground">Sign in</Link>
+          : existing ? <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">Back to {existing.name}</Link> : null}
       </header>
 
       <main className="mx-auto max-w-2xl px-4 pb-16 pt-4 sm:pt-10">

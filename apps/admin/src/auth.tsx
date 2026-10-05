@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api, ApiError, apiUrl, AUTH_EVENT, clearSession, getAccessToken, saveTokens, type User } from '@cp/shared';
+import { api, ApiError, apiUrl, AUTH_EVENT, clearSession, getAccessToken, saveTokens, setApiStoreId, type User } from '@cp/shared';
 
 // Merchant session on the existing estore-backend JWT endpoints. Anyone can
 // sign in or sign up; people without a store are sent to the store wizard.
@@ -81,7 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const signOut = useCallback(() => { clearSession(); setUser(null); }, []);
+  const signOut = useCallback(() => {
+    clearSession();
+    setApiStoreId(null);
+    try { localStorage.removeItem('cp_current_store'); } catch { /* storage unavailable */ }
+    setUser(null);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser }}>

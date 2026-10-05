@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { api, type PlatformStore } from '@cp/shared';
+import { useSyncExternalStore } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { api, setApiStoreId, type PlatformStore } from '@cp/shared';
 import { useAuth } from './auth';
 
 export const STOREFRONT_ORIGIN = (
@@ -7,15 +8,58 @@ export const STOREFRONT_ORIGIN = (
   || (import.meta.env.PROD ? 'https://commerce-platform-rho.vercel.app' : 'http://localhost:5174')
 ).replace(/\/$/, '');
 
-/** The signed-in merchant's Store Builder store (null if they haven't created one). */
-export function useMyStore() {
+// ─── Current store selection (per browser) ────────────────────────────────────
+
+const SELECTED_KEY = 'cp_current_store';
+const listeners = new Set<() => void>();
+let selectedId: string | null = (() => { try { return localStorage.getItem(SELECTED_KEY); } catch { return null; } })();
+
+export function selectStoreId(id: string | null) {
+  selectedId = id;
+  try { if (id) localStorage.setItem(SELECTED_KEY, id); else localStorage.removeItem(SELECTED_KEY); } catch { /* storage unavailable */ }
+  listeners.forEach(l => l());
+}
+
+const useSelectedStoreId = () => useSyncExternalStore(
+  cb => { listeners.add(cb); return () => listeners.delete(cb); },
+  () => selectedId,
+);
+
+/** All of the signed-in merchant's stores (newest first). */
+export function useMyStores() {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ['my-store', user?.id],
-    queryFn: async () => (await api<PlatformStore[]>('/api/platform/stores/', { auth: true }))[0] ?? null,
+    queryKey: ['my-stores', user?.id],
+    queryFn: () => api<PlatformStore[]>('/api/platform/stores/', { auth: true }),
     enabled: !!user,
     staleTime: 60_000,
   });
+}
+
+/**
+ * The store the admin is currently working on (null if they have none).
+ * Also points every authenticated API call at it (X-Store-Id), so products,
+ * orders and stats are that store's.
+ */
+export function useMyStore() {
+  const query = useMyStores();
+  const selected = useSelectedStoreId();
+  const stores = query.data;
+  // Default to the merchant's first store (it also holds their older products).
+  const store = stores === undefined ? undefined : (stores.find(s => s.id === selected) ?? stores[stores.length - 1] ?? null);
+  setApiStoreId(store?.id ?? null);
+  return { ...query, data: store };
+}
+
+/** Switch stores: remember the choice and drop cached data from the previous store. */
+export function useSwitchStore() {
+  const qc = useQueryClient();
+  return (id: string) => {
+    if (id === selectedId) return;
+    selectStoreId(id);
+    setApiStoreId(id);
+    qc.removeQueries({ predicate: q => q.queryKey[0] !== 'my-stores' });
+  };
 }
 
 const PLATFORM_DOMAIN = (import.meta.env.VITE_PLATFORM_DOMAIN as string | undefined)?.trim() || '';
