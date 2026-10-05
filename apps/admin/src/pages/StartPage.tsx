@@ -11,7 +11,7 @@ import {
 } from '@cp/shared';
 import { Button, Card, Input, Label, cn } from '@cp/ui';
 import { useAuth } from '../auth';
-import { useMyStore, storefrontUrl } from '../platform';
+import { useMyStore, storeAddressParts } from '../platform';
 
 const INDUSTRY_ICONS: Record<string, LucideIcon> = {
   shirt: Shirt, smartphone: Smartphone, flower: Flower2, 'shopping-basket': ShoppingBasket, sofa: Sofa, store: Store,
@@ -22,15 +22,15 @@ type Step = 'name' | 'industry' | 'look' | 'account' | 'creating';
 // ─── Slug availability (debounced) ────────────────────────────────────────────
 
 function useSlugCheck(slug: string) {
-  const [state, setState] = useState<{ checking: boolean; result: SlugCheck | null }>({ checking: false, result: null });
+  const [state, setState] = useState<{ checking: boolean; result: SlugCheck | null; failed: boolean }>({ checking: false, result: null, failed: false });
   useEffect(() => {
-    if (slug.length < 3) { setState({ checking: false, result: null }); return; }
-    setState(s => ({ ...s, checking: true }));
+    if (slug.length < 3) { setState({ checking: false, result: null, failed: false }); return; }
+    setState(s => ({ ...s, checking: true, failed: false }));
     const ctrl = new AbortController();
     const t = setTimeout(() => {
       api<SlugCheck>(`/api/platform/slug-check/?slug=${encodeURIComponent(slug)}`, { signal: ctrl.signal })
-        .then(result => setState({ checking: false, result }))
-        .catch(() => { if (!ctrl.signal.aborted) setState({ checking: false, result: null }); });
+        .then(result => setState({ checking: false, result, failed: false }))
+        .catch(() => { if (!ctrl.signal.aborted) setState({ checking: false, result: null, failed: true }); });
     }, 350);
     return () => { clearTimeout(t); ctrl.abort(); };
   }, [slug]);
@@ -96,7 +96,8 @@ export default function StartPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => { if (!slugEdited) setSlug(slugify(name)); }, [name, slugEdited]);
-  const { checking, result } = useSlugCheck(slug);
+  const { checking, result, failed: checkFailed } = useSlugCheck(slug);
+  const address = storeAddressParts();
   const slugOk = !!result?.available && result.slug === slug;
 
   if (authLoading || (user && storeLoading)) {
@@ -186,16 +187,18 @@ export default function StartPage() {
               <div className="space-y-1.5">
                 <Label htmlFor="store-slug">Store address</Label>
                 <div className="flex h-11 items-center rounded-md border border-input bg-card focus-within:ring-2 focus-within:ring-ring/40">
+                  {address.prefix && <span className="max-w-[55%] truncate pl-3 text-sm text-muted-foreground">{address.prefix}</span>}
                   <input id="store-slug" value={slug} maxLength={40}
                     onChange={e => { setSlugEdited(true); setSlug(slugify(e.target.value)); }}
-                    className="h-full min-w-0 flex-1 bg-transparent pl-3 text-sm outline-none" placeholder="your-store" aria-describedby="slug-status" />
-                  <span className="truncate pr-3 text-sm text-muted-foreground">.{new URL(storefrontUrl('x')).host.split('.').slice(1).join('.')}</span>
+                    className={cn('h-full min-w-0 flex-1 bg-transparent text-sm outline-none', address.prefix ? 'pl-0.5' : 'pl-3')} placeholder="your-store" aria-describedby="slug-status" />
+                  {address.suffix && <span className="truncate pr-3 text-sm text-muted-foreground">{address.suffix}</span>}
                 </div>
                 <p id="slug-status" className="flex items-center gap-1.5 text-xs" aria-live="polite">
                   {slug.length < 3 ? <span className="text-muted-foreground">At least 3 letters or numbers.</span>
                     : checking ? <><Loader2 className="h-3 w-3 animate-spin text-muted-foreground" /><span className="text-muted-foreground">Checking…</span></>
                     : slugOk ? <><Check className="h-3.5 w-3.5 text-emerald-600" /><span className="text-emerald-700 dark:text-emerald-400">Available</span></>
                     : result ? <><X className="h-3.5 w-3.5 text-destructive" /><span className="text-destructive">{result.reason}</span></>
+                    : checkFailed ? <><X className="h-3.5 w-3.5 text-destructive" /><span className="text-destructive">Couldn't check this address — the server isn't responding. Try again in a moment.</span></>
                     : null}
                 </p>
               </div>
