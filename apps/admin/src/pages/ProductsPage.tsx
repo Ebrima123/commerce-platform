@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { api, ApiError, fmtDalasi, type Paginated, type Product } from '@cp/shared';
 import { Badge, Button, Card, EmptyState, Input, Label, Skeleton } from '@cp/ui';
 import { PageHeader } from '../components/AdminLayout';
-import { ImageInput } from '../design/FieldControls';
+import { MultiImageInput } from '../design/FieldControls';
 
 type SellerProduct = Product & { published: boolean; sku: string };
 
@@ -81,7 +81,7 @@ export default function ProductsPage() {
 
 // ─── Add product ──────────────────────────────────────────────────────────────
 
-const EMPTY = { name: '', price: '', stock_quantity: '10', category: '', description: '', image_url: '', publish: true };
+const EMPTY = { name: '', price: '', stock_quantity: '10', category: '', description: '', images: [] as string[], publish: true };
 
 function NewProductDialog({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
@@ -100,8 +100,8 @@ function NewProductDialog({ onClose }: { onClose: () => void }) {
         method: 'POST', auth: true,
         body: {
           name: form.name.trim(), price: form.price, stock_quantity: Number(form.stock_quantity) || 0,
-          category: form.category.trim(), description: form.description.trim(), image_url: form.image_url,
-          image_urls: form.image_url ? [form.image_url] : [],
+          category: form.category.trim(), description: form.description.trim(),
+          image_url: form.images[0] ?? '', image_urls: form.images,
         },
       });
       // New products are created as drafts; publish in a second step if asked.
@@ -130,8 +130,8 @@ function NewProductDialog({ onClose }: { onClose: () => void }) {
         </div>
         <form id="new-product" onSubmit={submit} className="space-y-4 overflow-y-auto p-5">
           <div className="space-y-1.5">
-            <Label>Photo</Label>
-            <ImageInput id="product-image" value={form.image_url} onChange={v => set('image_url', v)} />
+            <Label htmlFor="product-images">Photos</Label>
+            <MultiImageInput id="product-images" values={form.images} onChange={v => set('images', v)} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="p-name">Name</Label>

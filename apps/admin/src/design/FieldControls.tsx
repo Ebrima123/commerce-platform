@@ -199,3 +199,89 @@ export function SettingField({ field, value, onChange, categories, sectionId }: 
       );
   }
 }
+
+// ─── Multiple images (product photos) ─────────────────────────────────────────
+
+export function MultiImageInput({ id, values, onChange, max = 8 }: {
+  id: string; values: string[]; onChange: (urls: string[]) => void; max?: number;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [urlDraft, setUrlDraft] = useState('');
+  const latest = useRef(values);
+  latest.current = values;
+
+  const uploadMany = async (files: FileList | File[] | null) => {
+    const list = Array.from(files ?? []).slice(0, Math.max(0, max - latest.current.length));
+    if (!list.length) { if (files?.length) toast.error(`You can add up to ${max} photos.`); return; }
+    setUploading(n => n + list.length);
+    await Promise.all(list.map(async file => {
+      try {
+        const url = await uploadImage(file);
+        onChange([...latest.current, url]);
+        latest.current = [...latest.current, url];
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Upload failed');
+      } finally {
+        setUploading(n => n - 1);
+      }
+    }));
+  };
+
+  const move = (i: number, d: number) => {
+    const j = i + d;
+    if (j < 0 || j >= values.length) return;
+    const next = [...values];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+
+  const full = values.length + uploading >= max;
+
+  return (
+    <div className="space-y-2"
+      onDragOver={e => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={e => { e.preventDefault(); setDragging(false); uploadMany(e.dataTransfer.files); }}>
+      <div className={cn('grid grid-cols-4 gap-2 rounded-lg p-1 transition-colors', dragging && 'bg-muted ring-1 ring-foreground/30')}>
+        {values.map((url, i) => (
+          <div key={url + i} className="group relative aspect-square overflow-hidden rounded-md border border-border/70 bg-muted/40">
+            <img src={url} alt={`Photo ${i + 1}`} className="h-full w-full object-cover" />
+            {i === 0 && <span className="absolute left-1 top-1 rounded bg-black/65 px-1.5 py-0.5 text-[10px] font-medium text-white">Cover</span>}
+            <div className="absolute inset-x-1 bottom-1 flex justify-between opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100">
+              <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move photo ${i + 1} earlier`}
+                className="flex h-6 w-6 items-center justify-center rounded bg-black/60 text-white disabled:opacity-30"><ChevronUp className="h-3.5 w-3.5 -rotate-90" /></button>
+              <button type="button" onClick={() => onChange(values.filter((_, j) => j !== i))} aria-label={`Remove photo ${i + 1}`}
+                className="flex h-6 w-6 items-center justify-center rounded bg-black/60 text-white hover:bg-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+              <button type="button" onClick={() => move(i, 1)} disabled={i === values.length - 1} aria-label={`Move photo ${i + 1} later`}
+                className="flex h-6 w-6 items-center justify-center rounded bg-black/60 text-white disabled:opacity-30"><ChevronDown className="h-3.5 w-3.5 -rotate-90" /></button>
+            </div>
+          </div>
+        ))}
+        {Array.from({ length: uploading }).map((_, i) => (
+          <div key={`up-${i}`} className="flex aspect-square items-center justify-center rounded-md border border-dashed border-border bg-muted/40">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ))}
+        {!full && (
+          <button type="button" disabled={!uploadsEnabled} onClick={() => inputRef.current?.click()}
+            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border bg-muted/30 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50">
+            <ImagePlus className="h-5 w-5" />
+            {values.length ? 'Add' : 'Add photos'}
+          </button>
+        )}
+      </div>
+      <input ref={inputRef} id={id} type="file" accept="image/*" multiple className="sr-only"
+        onChange={e => { uploadMany(e.target.files); e.target.value = ''; }} />
+      <p className="text-xs text-muted-foreground">Drop several photos at once. The first one is the cover. {values.length}/{max}</p>
+      {!full && (
+        <div className="flex gap-2">
+          <Input value={urlDraft} onChange={e => setUrlDraft(e.target.value)} placeholder="…or paste an image URL" className="h-8 text-xs" aria-label="Image URL" />
+          <Button type="button" variant="outline" size="sm" className="h-8" disabled={!/^https?:\/\//.test(urlDraft.trim())}
+            onClick={() => { onChange([...values, urlDraft.trim()]); setUrlDraft(''); }}>Add</Button>
+        </div>
+      )}
+    </div>
+  );
+}
