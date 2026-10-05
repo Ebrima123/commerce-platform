@@ -11,7 +11,8 @@ import CategoriesPage from './pages/CategoriesPage';
 import { MarketplaceShell } from './components/marketplace/MarketplaceShell';
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
-import { ComingSoonPage, NoStorePage, StoreNotFoundPage } from './pages/StatusPages';
+import { ComingSoonPage, StoreNotFoundPage } from './pages/StatusPages';
+import LandingPage from './pages/LandingPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1, refetchOnWindowFocus: false } },
@@ -19,7 +20,8 @@ const queryClient = new QueryClient({
 
 function Storefront() {
   const { slug, basePath, store, isLoading, isError, preview } = useStore();
-  if (!slug) return <NoStorePage />;
+  // No store in the address → the platform's own landing page.
+  if (!slug) return <LandingPage />;
   if (isLoading) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   }

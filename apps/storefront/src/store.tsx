@@ -52,7 +52,7 @@ async function loadLegacyStore(slug: string): Promise<StoreView> {
   };
 }
 
-const ADMIN_ORIGIN = ((import.meta.env.VITE_ADMIN_ORIGIN as string | undefined)
+export const ADMIN_ORIGIN = ((import.meta.env.VITE_ADMIN_ORIGIN as string | undefined)
   || (import.meta.env.PROD ? 'https://commerce-platform-syp7.vercel.app' : 'http://localhost:5173')).replace(/\/$/, '');
 
 interface StoreState {
