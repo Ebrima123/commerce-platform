@@ -29,6 +29,12 @@ export interface Product {
   image_url: string;
   images?: ProductImage[];
   seller_id?: string;
+  // Real social proof from the backend (absent on some endpoints).
+  sales_count?: number;
+  average_rating?: number;
+  total_reviews?: number;
+  is_best_seller?: boolean;
+  is_hot_pick?: boolean;
 }
 
 export interface User {

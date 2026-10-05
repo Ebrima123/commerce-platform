@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { createSection, SECTION_DEFINITIONS, type Brand, type Section, type SectionType, type SettingValue, type Theme } from '@cp/shared';
+import { createSection, SECTION_DEFINITIONS, type Brand, type Section, type SectionType, type SettingValue, type TemplateKey, type Theme } from '@cp/shared';
 
 const MAX_HISTORY = 60;
 const MERGE_WINDOW_MS = 600;
@@ -52,6 +52,8 @@ export function useThemeEditor(initial: Theme) {
   const actions = useMemo(() => {
     const mapSections = (fn: (sections: Section[]) => Section[]) => (t: Theme) => ({ ...t, sections: fn(t.sections) });
     return {
+      setTemplate: (template: TemplateKey) => commit(t => ({ ...t, template })),
+
       setBrand: (patch: Partial<Brand>, mergeKey?: string) =>
         commit(t => ({ ...t, brand: { ...t.brand, ...patch } }), mergeKey),
 

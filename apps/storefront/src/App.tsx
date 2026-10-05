@@ -6,6 +6,9 @@ import { CartProvider, StoreProvider, useStore } from './store';
 import { StoreShell } from './components/StoreShell';
 import { ThemeRoot } from './components/ThemeRoot';
 import HomePage from './pages/HomePage';
+import MarketplaceHome from './pages/MarketplaceHome';
+import CategoriesPage from './pages/CategoriesPage';
+import { MarketplaceShell } from './components/marketplace/MarketplaceShell';
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
 import { ComingSoonPage, NoStorePage, StoreNotFoundPage } from './pages/StatusPages';
@@ -21,6 +24,9 @@ function Storefront() {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   }
   if (isError || !store) return <StoreNotFoundPage slug={slug} />;
+  // Marketplace style (SHEIN / Temu / Alfudi-like) vs. the boutique layouts.
+  const marketplace = store.theme.template === 'marketplace';
+  const Home = marketplace ? MarketplaceHome : HomePage;
 
   return (
     <ThemeRoot brand={store.theme.brand}>
@@ -30,11 +36,12 @@ function Storefront() {
         <CartProvider>
           <BrowserRouter basename={basePath || undefined}>
             <Routes>
-              <Route element={<StoreShell />}>
-                <Route index element={<HomePage />} />
+              <Route element={marketplace ? <MarketplaceShell /> : <StoreShell />}>
+                <Route index element={<Home />} />
+                <Route path="categories" element={marketplace ? <CategoriesPage /> : <Home />} />
                 <Route path="products/:id" element={<ProductPage />} />
                 <Route path="cart" element={<CartPage />} />
-                <Route path="*" element={<HomePage />} />
+                <Route path="*" element={<Home />} />
               </Route>
             </Routes>
           </BrowserRouter>

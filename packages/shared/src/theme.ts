@@ -251,7 +251,7 @@ export const BRAND_SWATCHES = ['#111827', '#e11d48', '#ea580c', '#ca8a04', '#16a
 // delivery) and testimonials start hidden — merchants add real quotes first.
 
 export type IndustryKey = 'fashion' | 'electronics' | 'beauty' | 'food' | 'home' | 'general';
-export type TemplateKey = 'recommended' | 'minimal' | 'bold' | 'boutique';
+export type TemplateKey = 'marketplace' | 'recommended' | 'minimal' | 'bold' | 'boutique';
 
 const img = (id: string, w = 1200) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
 
@@ -423,7 +423,8 @@ export const INDUSTRIES: Record<IndustryKey, IndustryPreset> = {
 };
 
 export const TEMPLATES: Record<TemplateKey, { label: string; description: string; brand?: Omit<Brand, 'primaryColor' | 'logoUrl'> }> = {
-  recommended: { label: 'Recommended', description: 'Designed for your kind of store — the best place to start.' },
+  marketplace: { label: 'Marketplace', description: 'Busy, deal-packed shop like SHEIN, Temu or Alfudi — search first, lots of products.', brand: { font: 'inter', headingFont: 'poppins', radius: 'md', surface: 'white' } },
+  recommended: { label: 'Boutique (recommended)', description: 'Designed for your kind of store — the best place to start.' },
   minimal:  { label: 'Minimal',  description: 'Clean and simple. Lets your products do the talking.', brand: { font: 'inter', headingFont: 'inter', radius: 'md', surface: 'white' } },
   bold:     { label: 'Bold',     description: 'Big type, strong colour and full-width images.', brand: { font: 'poppins', headingFont: 'poppins', radius: 'xl', surface: 'white' } },
   boutique: { label: 'Boutique', description: 'Elegant serif headings on a warm background.', brand: { font: 'dm-sans', headingFont: 'playfair', radius: 'none', surface: 'warm' } },
@@ -441,6 +442,7 @@ export function createSection(type: SectionType, overrides: Record<string, Setti
 }
 
 const HERO_LAYOUT: Record<Exclude<TemplateKey, 'recommended'>, { layout: string; height: string }> = {
+  marketplace: { layout: 'overlay', height: 'sm' },
   minimal: { layout: 'center', height: 'md' },
   bold: { layout: 'overlay', height: 'lg' },
   boutique: { layout: 'split', height: 'md' },

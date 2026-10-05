@@ -215,7 +215,7 @@ function Editor({ store }: { store: PlatformStore }) {
                   </div>
                 )}
                 {panel.kind === 'brand' ? (
-                  <BrandSettings brand={theme.brand} onChange={editor.setBrand} />
+                  <BrandSettings brand={theme.brand} onChange={editor.setBrand} marketplace={theme.template === 'marketplace'} onStyle={m => editor.setTemplate(m ? 'marketplace' : 'recommended')} />
                 ) : (
                   <SectionListPanel
                     sections={theme.sections}
@@ -351,10 +351,18 @@ function Segmented<T extends string>({ value, options, onChange, label }: { valu
   );
 }
 
-function BrandSettings({ brand, onChange }: { brand: Brand; onChange: (patch: Partial<Brand>, mergeKey?: string) => void }) {
+function BrandSettings({ brand, onChange, marketplace, onStyle }: {
+  brand: Brand; onChange: (patch: Partial<Brand>, mergeKey?: string) => void; marketplace: boolean; onStyle: (marketplace: boolean) => void;
+}) {
   const fontOptions = (Object.keys(FONTS) as FontKey[]).map(k => ({ value: k, label: FONTS[k].label }));
   return (
     <div className="space-y-6 p-4">
+      <FieldRow label="Store style">
+        <Segmented label="Store style" value={marketplace ? 'marketplace' : 'boutique'} onChange={(v: 'marketplace' | 'boutique') => onStyle(v === 'marketplace')}
+          options={[{ value: 'marketplace', label: 'Marketplace' }, { value: 'boutique', label: 'Boutique' }]} />
+        <p className="mt-1.5 text-xs text-muted-foreground">{marketplace ? 'Like SHEIN, Temu or Alfudi: search, category icons and lots of products.' : 'Calm and elegant: big photos and your story.'}</p>
+      </FieldRow>
+
       <FieldRow id="brand-logo" label="Logo">
         <ImageInput id="brand-logo" value={brand.logoUrl} onChange={logoUrl => onChange({ logoUrl })} compact />
       </FieldRow>

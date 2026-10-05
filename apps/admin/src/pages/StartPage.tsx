@@ -39,6 +39,40 @@ function useSlugCheck(slug: string) {
 
 // ─── Template mini-mockup ─────────────────────────────────────────────────────
 
+/** Mini marketplace store: coloured header + search, category circles, dense product grid. */
+function MarketplaceMock({ industry, color }: { industry: IndustryKey; color: string }) {
+  const preset = INDUSTRIES[industry];
+  const hero = preset.sections.find(s => s.type === 'hero')?.settings ?? {};
+  const banner = String(hero.imageUrl ?? '').replace('w=1200', 'w=400');
+  const thumbs = preset.samples.map(p => p.imageUrl.replace('w=600', 'w=120'));
+  return (
+    <div className="aspect-[4/3] w-full overflow-hidden rounded-lg border border-border/60 bg-zinc-100">
+      <div className="flex items-center gap-1.5 px-2 py-1.5" style={{ background: color }}>
+        <div className="h-1.5 w-7 rounded-full bg-white/90" />
+        <div className="h-3.5 flex-1 rounded-full bg-white" />
+      </div>
+      <div className="space-y-1.5 p-1.5">
+        <div className="relative h-[34%] overflow-hidden rounded-md" style={{ height: 52, background: color }}>
+          {banner && <img src={banner} alt="" className="h-full w-full object-cover" loading="lazy" />}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
+          <div className="absolute left-1.5 top-3 h-1.5 w-12 rounded-full bg-white/90" />
+        </div>
+        <div className="flex gap-1.5 rounded-md bg-white p-1">
+          {thumbs.slice(0, 5).map((t, i) => <img key={i} src={t} alt="" className="h-5 w-5 rounded-full object-cover" loading="lazy" />)}
+        </div>
+        <div className="grid grid-cols-4 gap-1">
+          {[...thumbs, ...thumbs].slice(0, 4).map((t, i) => (
+            <div key={i} className="overflow-hidden rounded bg-white">
+              <img src={t} alt="" className="aspect-square w-full object-cover" loading="lazy" />
+              <div className="m-0.5 h-1 w-2/3 rounded-full" style={{ background: color }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Mini version of the industry's hand-designed store: real hero photo, fonts, colour and corners. */
 function RecommendedMock({ industry, color }: { industry: IndustryKey; color: string }) {
   const preset = INDUSTRIES[industry];
@@ -137,7 +171,7 @@ export default function StartPage() {
   const [slugEdited, setSlugEdited] = useState(false);
   const [whatsapp, setWhatsapp] = useState('');
   const [industry, setIndustry] = useState<IndustryKey | null>(null);
-  const [template, setTemplate] = useState<TemplateKey>('recommended');
+  const [template, setTemplate] = useState<TemplateKey>('marketplace');
   const [color, setColor] = useState(INDUSTRIES.general.brand.primaryColor);
   const [colorPicked, setColorPicked] = useState(false);
   // Each industry has a designed brand colour — use it until the merchant picks their own.
@@ -292,26 +326,30 @@ export default function StartPage() {
               <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Template">
                 {(Object.keys(TEMPLATES) as TemplateKey[]).map(key => {
                   const active = template === key;
+                  const featured = key === 'marketplace' || key === 'recommended';
                   return (
                     <button key={key} type="button" role="radio" aria-checked={active} onClick={() => setTemplate(key)}
                       className={cn('rounded-xl border bg-card p-3 text-left transition-all',
-                        key === 'recommended' && 'sm:col-span-3 sm:grid sm:grid-cols-[1.3fr_1fr] sm:items-center sm:gap-5',
+                        featured && 'sm:col-span-3 sm:grid sm:grid-cols-[1.3fr_1fr] sm:items-center sm:gap-5',
                         active ? 'border-foreground ring-1 ring-foreground' : 'border-border hover:border-foreground/40')}>
-                      {key === 'recommended'
-                        ? <RecommendedMock industry={industry ?? 'general'} color={color} />
+                      {key === 'marketplace' ? <MarketplaceMock industry={industry ?? 'general'} color={color} />
+                        : key === 'recommended' ? <RecommendedMock industry={industry ?? 'general'} color={color} />
                         : <TemplateMock template={key} color={color} />}
                       <div>
-                        <p className="mt-3 flex items-center gap-2 text-sm font-medium sm:mt-0">
-                          {TEMPLATES[key].label}
-                          {key === 'recommended' && (
-                            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">Best for {INDUSTRIES[industry ?? 'general'].label.toLowerCase()}</span>
+                        <p className="mt-3 flex flex-wrap items-center gap-2 text-sm font-medium sm:mt-0">
+                          {key === 'marketplace' ? 'Marketplace' : key === 'recommended' ? 'Boutique' : TEMPLATES[key].label}
+                          {key === 'marketplace' && (
+                            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">Most popular</span>
                           )}
                         </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          {key === 'recommended'
-                            ? 'A complete store designed for how your customers shop — layout, fonts, colours and starter text. Launch it as-is or tweak anything later.'
-                            : TEMPLATES[key].description}
-                        </p>                      </div>
+                          {key === 'marketplace'
+                            ? 'Like SHEIN, Temu or Alfudi: big search bar, category icons, banners and lots of products on one screen. Best if you sell many items.'
+                            : key === 'recommended'
+                              ? `A calm, elegant shop designed for ${INDUSTRIES[industry ?? 'general'].label.toLowerCase()} — big photos and your story. Best if you sell fewer, special items.`
+                              : TEMPLATES[key].description}
+                        </p>
+                      </div>
                     </button>
                   );
                 })}
