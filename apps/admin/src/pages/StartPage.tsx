@@ -260,7 +260,7 @@ export default function StartPage() {
       <header className="flex h-16 items-center justify-between px-4 sm:px-8">
         <Link to="/" className="flex items-center gap-2 text-sm font-semibold">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-brand-foreground"><Store className="h-4 w-4" /></span>
-          Store Builder
+          Mariseh
         </Link>
         {!user ? <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground">Sign in</Link>
           : existing ? <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">Back to {existing.name}</Link> : null}

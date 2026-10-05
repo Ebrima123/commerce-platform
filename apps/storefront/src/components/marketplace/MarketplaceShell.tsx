@@ -97,7 +97,7 @@ export function MarketplaceShell() {
             </div>
           )}
         </div>
-        <p className="border-t border-border/70 py-4 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} {store.name} · Powered by Store Builder</p>
+        <p className="border-t border-border/70 py-4 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} {store.name} · Powered by Mariseh</p>
       </footer>
 
       {/* Bottom tab bar (phones) */}

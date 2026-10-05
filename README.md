@@ -1,4 +1,4 @@
-# Store Builder (working name)
+# Mariseh
 
 A hosted store platform: businesses sign up, build an online store, and pay a
 monthly subscription. It runs on the same Django backend as Alfudi

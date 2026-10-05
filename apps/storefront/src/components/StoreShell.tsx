@@ -147,7 +147,7 @@ export function StoreShell() {
         <div className="border-t border-border/70">
           <div className={cn(container, 'flex flex-col gap-2 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between')}>
             <span>© {new Date().getFullYear()} {store.name}. All rights reserved.</span>
-            <span>Powered by Store Builder</span>
+            <span>Powered by Mariseh</span>
           </div>
         </div>
       </footer>

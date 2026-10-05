@@ -1,6 +1,6 @@
 import type { Theme } from './theme';
 
-// Store Builder API shapes (estore-backend/platform_stores).
+// Mariseh API shapes (estore-backend/platform_stores).
 
 export interface PlatformStore {
   id: string;

@@ -6,7 +6,7 @@ import {
 } from '@cp/shared';
 
 // ─── Current store (tenant) ───────────────────────────────────────────────────
-// Platform stores (created in the Store Builder) are looked up first; existing
+// Platform stores (created on Mariseh) are looked up first; existing
 // Alfudi sellers without a platform store still render with a default design.
 
 export interface StoreView {

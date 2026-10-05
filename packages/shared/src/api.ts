@@ -18,7 +18,7 @@ export class ApiError extends Error {
 
 type Options = { method?: string; body?: unknown; auth?: boolean; signal?: AbortSignal };
 
-// Which Store Builder store authenticated requests act on (a merchant can run
+// Which Mariseh store authenticated requests act on (a merchant can run
 // several). Sent as X-Store-Id; the backend scopes products/orders/stats to it.
 let currentStoreId: string | null = null;
 export const setApiStoreId = (id: string | null) => { currentStoreId = id; };

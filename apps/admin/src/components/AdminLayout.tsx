@@ -91,7 +91,7 @@ function StoreSwitcher({ onNavigate }: { onNavigate?: () => void }) {
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold tracking-tight">{store?.name || 'Your store'}</p>
-          <p className="text-xs text-muted-foreground">{stores.length > 1 ? `${stores.length} stores` : 'Store Builder'}</p>
+          <p className="text-xs text-muted-foreground">{stores.length > 1 ? `${stores.length} stores` : 'Mariseh'}</p>
         </div>
         <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
       </button>
@@ -208,7 +208,7 @@ export function AdminLayout() {
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur-sm lg:hidden">
           <Button variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label="Open navigation"><Menu className="h-5 w-5" /></Button>
-          <Link to="/" className="text-sm font-semibold">Store Builder</Link>
+          <Link to="/" className="text-sm font-semibold">Mariseh</Link>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <Outlet />

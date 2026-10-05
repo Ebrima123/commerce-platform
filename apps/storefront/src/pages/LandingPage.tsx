@@ -112,7 +112,7 @@ const FEATURES = [
 ];
 
 const FAQS = [
-  { q: 'Do I need a computer or tech skills?', a: 'No. You can set up and run your whole store from your phone. If you can use WhatsApp, you can use Store Builder.' },
+  { q: 'Do I need a computer or tech skills?', a: 'No. You can set up and run your whole store from your phone. If you can use WhatsApp, you can use Mariseh.' },
   { q: 'How do customers pay?', a: 'Customers send their order to you on WhatsApp and pay you directly — with Wave or cash on delivery, the same way you already sell.' },
   { q: 'What will my store link look like?', a: 'Something like mariseh.com/@yourshop. You can share it anywhere — WhatsApp, Facebook, Instagram, TikTok.' },
   { q: 'How much does it cost?', a: 'You can create your store and try everything first. We’ll show you the monthly price clearly before anything is charged.' },
@@ -127,7 +127,7 @@ export default function LandingPage() {
   const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    document.title = 'Store Builder — Your online shop in 2 minutes';
+    document.title = 'Mariseh — Your online shop in 2 minutes';
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -151,7 +151,7 @@ export default function LandingPage() {
         <div className={cn(wrap, 'flex h-16 items-center justify-between gap-4')}>
           <a href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl text-white" style={{ background: ACCENT }}><Store className="h-5 w-5" /></span>
-            Store Builder
+            Mariseh
           </a>
           <nav className="hidden items-center gap-8 text-sm font-medium text-zinc-600 md:flex">
             {nav.map(([label, href]) => <a key={href} href={href} className="hover:text-zinc-900">{label}</a>)}
@@ -388,13 +388,13 @@ export default function LandingPage() {
 
       <footer className="border-t border-zinc-100 pb-28 pt-10 md:pb-10">
         <div className={cn(wrap, 'flex flex-col items-center justify-between gap-4 text-sm text-zinc-500 sm:flex-row')}>
-          <p className="flex items-center gap-2 font-semibold text-zinc-900"><Store className="h-4 w-4" style={{ color: ACCENT }} /> Store Builder</p>
+          <p className="flex items-center gap-2 font-semibold text-zinc-900"><Store className="h-4 w-4" style={{ color: ACCENT }} /> Mariseh</p>
           <div className="flex gap-6">
             <a href={SIGN_IN} className="hover:text-zinc-900">Sign in</a>
             <a href={START} className="hover:text-zinc-900">Create a store</a>
             <a href="#faq" className="hover:text-zinc-900">FAQ</a>
           </div>
-          <p>© {new Date().getFullYear()} Store Builder</p>
+          <p>© {new Date().getFullYear()} Mariseh</p>
         </div>
       </footer>
     </div>
