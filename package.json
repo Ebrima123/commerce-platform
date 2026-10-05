@@ -1,0 +1,15 @@
+{
+  "name": "commerce-platform",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:admin": "npm run dev -w @cp/admin",
+    "dev:storefront": "npm run dev -w @cp/storefront",
+    "build": "npm run build -w @cp/admin && npm run build -w @cp/storefront",
+    "typecheck": "npm run typecheck -w @cp/admin && npm run typecheck -w @cp/storefront"
+  }
+}

@@ -1,0 +1,315 @@
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowLeft, ArrowRight, Check, Loader2, Shirt, Smartphone, Flower2, ShoppingBasket, Sofa, Store,
+  Sparkles, X, type LucideIcon,
+} from 'lucide-react';
+import {
+  api, ApiError, BRAND_SWATCHES, INDUSTRIES, TEMPLATES, generateTheme, slugify,
+  type IndustryKey, type PlatformStore, type SlugCheck, type TemplateKey,
+} from '@cp/shared';
+import { Button, Card, Input, Label, cn } from '@cp/ui';
+import { useAuth } from '../auth';
+import { useMyStore, storefrontUrl } from '../platform';
+
+const INDUSTRY_ICONS: Record<string, LucideIcon> = {
+  shirt: Shirt, smartphone: Smartphone, flower: Flower2, 'shopping-basket': ShoppingBasket, sofa: Sofa, store: Store,
+};
+
+type Step = 'name' | 'industry' | 'look' | 'account' | 'creating';
+
+// ─── Slug availability (debounced) ────────────────────────────────────────────
+
+function useSlugCheck(slug: string) {
+  const [state, setState] = useState<{ checking: boolean; result: SlugCheck | null }>({ checking: false, result: null });
+  useEffect(() => {
+    if (slug.length < 3) { setState({ checking: false, result: null }); return; }
+    setState(s => ({ ...s, checking: true }));
+    const ctrl = new AbortController();
+    const t = setTimeout(() => {
+      api<SlugCheck>(`/api/platform/slug-check/?slug=${encodeURIComponent(slug)}`, { signal: ctrl.signal })
+        .then(result => setState({ checking: false, result }))
+        .catch(() => { if (!ctrl.signal.aborted) setState({ checking: false, result: null }); });
+    }, 350);
+    return () => { clearTimeout(t); ctrl.abort(); };
+  }, [slug]);
+  return state;
+}
+
+// ─── Template mini-mockup ─────────────────────────────────────────────────────
+
+function TemplateMock({ template, color }: { template: TemplateKey; color: string }) {
+  const warm = template === 'boutique';
+  const radius = template === 'bold' ? 'rounded-md' : template === 'minimal' ? 'rounded-sm' : 'rounded-none';
+  return (
+    <div className={cn('aspect-[4/3] w-full overflow-hidden rounded-lg border border-border/60 p-2', warm ? 'bg-[#faf6ef]' : 'bg-white')}>
+      <div className="flex items-center justify-between">
+        <div className="h-1.5 w-8 rounded-full bg-zinc-800/70" />
+        <div className="h-1.5 w-3 rounded-full bg-zinc-300" />
+      </div>
+      {template === 'bold' ? (
+        <div className={cn('mt-2 flex h-[45%] flex-col justify-end p-1.5', radius)} style={{ background: color }}>
+          <div className="h-2 w-3/4 rounded-sm bg-white/90" />
+          <div className="mt-1 h-1 w-1/2 rounded-sm bg-white/60" />
+        </div>
+      ) : template === 'boutique' ? (
+        <div className="mt-2 grid h-[45%] grid-cols-2 gap-1.5">
+          <div className="flex flex-col justify-center gap-1">
+            <div className="h-2 w-full bg-zinc-800" style={{ fontFamily: 'serif' }} />
+            <div className="h-1 w-2/3 bg-zinc-400" />
+            <div className="mt-0.5 h-1.5 w-1/2" style={{ background: color }} />
+          </div>
+          <div className="bg-zinc-200" />
+        </div>
+      ) : (
+        <div className="mt-3 flex h-[40%] flex-col items-center justify-center gap-1">
+          <div className="h-2 w-2/3 rounded-sm bg-zinc-800" />
+          <div className="h-1 w-1/2 rounded-sm bg-zinc-300" />
+          <div className={cn('mt-0.5 h-1.5 w-1/4', radius)} style={{ background: color }} />
+        </div>
+      )}
+      <div className="mt-2 grid grid-cols-4 gap-1">
+        {[0, 1, 2, 3].map(i => <div key={i} className={cn('aspect-square bg-zinc-200', radius)} />)}
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function StartPage() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const { user, loading: authLoading, signUp } = useAuth();
+  const { data: existing, isLoading: storeLoading } = useMyStore();
+
+  const [step, setStep] = useState<Step>('name');
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [slugEdited, setSlugEdited] = useState(false);
+  const [whatsapp, setWhatsapp] = useState('');
+  const [industry, setIndustry] = useState<IndustryKey | null>(null);
+  const [template, setTemplate] = useState<TemplateKey>('minimal');
+  const [color, setColor] = useState(BRAND_SWATCHES[0]);
+  const [account, setAccount] = useState({ full_name: '', username: '', email: '', password: '' });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => { if (!slugEdited) setSlug(slugify(name)); }, [name, slugEdited]);
+  const { checking, result } = useSlugCheck(slug);
+  const slugOk = !!result?.available && result.slug === slug;
+
+  if (authLoading || (user && storeLoading)) {
+    return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+  }
+  if (existing && step !== 'creating') return <Navigate to="/design" replace />;
+
+  const steps: Step[] = user ? ['name', 'industry', 'look'] : ['name', 'industry', 'look', 'account'];
+  const stepIndex = steps.indexOf(step);
+
+  const create = async () => {
+    setStep('creating');
+    setErrors({});
+    try {
+      const theme = generateTheme({ storeName: name.trim(), industry: industry ?? 'general', template, primaryColor: color });
+      await api<PlatformStore>('/api/platform/stores/', {
+        method: 'POST', auth: true,
+        body: { name: name.trim(), slug, industry: industry ?? 'general', theme, whatsapp: whatsapp.trim() },
+      });
+      await qc.invalidateQueries({ queryKey: ['my-store'] });
+      navigate('/design?welcome=1', { replace: true });
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'Could not create your store. Please try again.';
+      const field = e instanceof ApiError && (e.body as { field?: string } | null)?.field;
+      setErrors({ form: msg });
+      setStep(field === 'slug' ? 'name' : steps[steps.length - 1]);
+    }
+  };
+
+  const next = async (e?: FormEvent) => {
+    e?.preventDefault();
+    if (step === 'account') {
+      const errs = await signUp(account);
+      if (errs) { setErrors(errs); return; }
+      await create();
+      return;
+    }
+    const i = steps.indexOf(step);
+    if (i < steps.length - 1) setStep(steps[i + 1]);
+    else await create();
+  };
+  const back = () => { setErrors({}); setStep(steps[Math.max(0, stepIndex - 1)]); };
+
+  const canContinue =
+    step === 'name' ? name.trim().length >= 2 && slugOk :
+    step === 'industry' ? !!industry :
+    step === 'look' ? true :
+    step === 'account' ? !!(account.username && account.email && account.password.length >= 6) : false;
+
+  if (step === 'creating') {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
+        <div className="relative mb-6 flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg" style={{ background: color }}>
+          <Sparkles className="h-6 w-6 animate-pulse" />
+        </div>
+        <h1 className="text-xl font-semibold tracking-tight">Building {name.trim() || 'your store'}…</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Setting up your pages, sections and colours.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-muted/40">
+      <header className="flex h-16 items-center justify-between px-4 sm:px-8">
+        <Link to="/" className="flex items-center gap-2 text-sm font-semibold">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-brand-foreground"><Store className="h-4 w-4" /></span>
+          Store Builder
+        </Link>
+        {!user && <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground">Sign in</Link>}
+      </header>
+
+      <main className="mx-auto max-w-2xl px-4 pb-16 pt-4 sm:pt-10">
+        {/* Progress */}
+        <div className="mb-8 flex items-center gap-2" aria-label={`Step ${stepIndex + 1} of ${steps.length}`}>
+          {steps.map((s, i) => (
+            <div key={s} className={cn('h-1.5 flex-1 rounded-full transition-colors', i <= stepIndex ? 'bg-foreground' : 'bg-border')} />
+          ))}
+        </div>
+
+        <form onSubmit={next}>
+          {step === 'name' && (
+            <StepCard title="Let's name your store" subtitle="You can change the name any time.">
+              <div className="space-y-1.5">
+                <Label htmlFor="store-name">Store name</Label>
+                <Input id="store-name" autoFocus value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Fatou's Fashion House" maxLength={200} className="h-11 text-base" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="store-slug">Store address</Label>
+                <div className="flex h-11 items-center rounded-md border border-input bg-card focus-within:ring-2 focus-within:ring-ring/40">
+                  <input id="store-slug" value={slug} maxLength={40}
+                    onChange={e => { setSlugEdited(true); setSlug(slugify(e.target.value)); }}
+                    className="h-full min-w-0 flex-1 bg-transparent pl-3 text-sm outline-none" placeholder="your-store" aria-describedby="slug-status" />
+                  <span className="truncate pr-3 text-sm text-muted-foreground">.{new URL(storefrontUrl('x')).host.split('.').slice(1).join('.')}</span>
+                </div>
+                <p id="slug-status" className="flex items-center gap-1.5 text-xs" aria-live="polite">
+                  {slug.length < 3 ? <span className="text-muted-foreground">At least 3 letters or numbers.</span>
+                    : checking ? <><Loader2 className="h-3 w-3 animate-spin text-muted-foreground" /><span className="text-muted-foreground">Checking…</span></>
+                    : slugOk ? <><Check className="h-3.5 w-3.5 text-emerald-600" /><span className="text-emerald-700 dark:text-emerald-400">Available</span></>
+                    : result ? <><X className="h-3.5 w-3.5 text-destructive" /><span className="text-destructive">{result.reason}</span></>
+                    : null}
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="store-wa">WhatsApp number <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                <Input id="store-wa" inputMode="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="220 XXX XXXX" className="h-11" />
+                <p className="text-xs text-muted-foreground">Customers send their orders here.</p>
+              </div>
+            </StepCard>
+          )}
+
+          {step === 'industry' && (
+            <StepCard title="What do you sell?" subtitle="We'll write starter text and pick highlights for you.">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Industry">
+                {(Object.keys(INDUSTRIES) as IndustryKey[]).map(key => {
+                  const Icon = INDUSTRY_ICONS[INDUSTRIES[key].icon] ?? Store;
+                  const active = industry === key;
+                  return (
+                    <button key={key} type="button" role="radio" aria-checked={active} onClick={() => setIndustry(key)}
+                      className={cn('flex flex-col items-start gap-3 rounded-xl border bg-card p-4 text-left transition-all',
+                        active ? 'border-foreground ring-1 ring-foreground' : 'border-border hover:border-foreground/40')}>
+                      <Icon className="h-5 w-5" />
+                      <span className="text-sm font-medium">{INDUSTRIES[key].label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </StepCard>
+          )}
+
+          {step === 'look' && (
+            <StepCard title="Pick a look" subtitle="Every part of it can be changed later in the designer.">
+              <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Template">
+                {(Object.keys(TEMPLATES) as TemplateKey[]).map(key => {
+                  const active = template === key;
+                  return (
+                    <button key={key} type="button" role="radio" aria-checked={active} onClick={() => setTemplate(key)}
+                      className={cn('rounded-xl border bg-card p-3 text-left transition-all',
+                        active ? 'border-foreground ring-1 ring-foreground' : 'border-border hover:border-foreground/40')}>
+                      <TemplateMock template={key} color={color} />
+                      <p className="mt-3 text-sm font-medium">{TEMPLATES[key].label}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{TEMPLATES[key].description}</p>
+                    </button>
+                  );
+                })}
+              </div>
+              <div>
+                <Label>Brand colour</Label>
+                <div className="mt-2 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Brand colour">
+                  {BRAND_SWATCHES.map(c => (
+                    <button key={c} type="button" role="radio" aria-checked={color === c} aria-label={c} onClick={() => setColor(c)}
+                      className={cn('h-8 w-8 rounded-full ring-offset-2 ring-offset-background transition-shadow', color === c && 'ring-2 ring-foreground')}
+                      style={{ background: c }} />
+                  ))}
+                  <label className="relative h-8 w-8 cursor-pointer overflow-hidden rounded-full border border-dashed border-border" title="Custom colour">
+                    <input type="color" value={color} onChange={e => setColor(e.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" aria-label="Custom colour" />
+                    <span className="flex h-full items-center justify-center text-xs text-muted-foreground">+</span>
+                  </label>
+                </div>
+              </div>
+            </StepCard>
+          )}
+
+          {step === 'account' && (
+            <StepCard title="Create your account" subtitle="Last step — then your store goes live.">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field id="full_name" label="Your name" error={errors.full_name}>
+                  <Input id="full_name" autoComplete="name" value={account.full_name} onChange={e => setAccount(a => ({ ...a, full_name: e.target.value }))} />
+                </Field>
+                <Field id="username" label="Username" error={errors.username}>
+                  <Input id="username" autoComplete="username" value={account.username} onChange={e => setAccount(a => ({ ...a, username: e.target.value }))} required />
+                </Field>
+              </div>
+              <Field id="email" label="Email" error={errors.email}>
+                <Input id="email" type="email" autoComplete="email" value={account.email} onChange={e => setAccount(a => ({ ...a, email: e.target.value }))} required />
+              </Field>
+              <Field id="password" label="Password" error={errors.password}>
+                <Input id="password" type="password" autoComplete="new-password" minLength={6} value={account.password} onChange={e => setAccount(a => ({ ...a, password: e.target.value }))} required />
+              </Field>
+            </StepCard>
+          )}
+
+          {errors.form && <p role="alert" className="mt-4 text-sm text-destructive">{errors.form}</p>}
+
+          <div className="mt-6 flex items-center justify-between">
+            {stepIndex > 0 ? (
+              <Button type="button" variant="ghost" onClick={back}><ArrowLeft /> Back</Button>
+            ) : <span />}
+            <Button type="submit" size="lg" disabled={!canContinue}>
+              {stepIndex === steps.length - 1 ? <>Create my store <Sparkles /></> : <>Continue <ArrowRight /></>}
+            </Button>
+          </div>
+        </form>
+      </main>
+    </div>
+  );
+}
+
+function StepCard({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+  return (
+    <Card className="p-6 sm:p-8">
+      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+      <div className="mt-6 space-y-5">{children}</div>
+    </Card>
+  );
+}
+
+function Field({ id, label, error, children }: { id: string; label: string; error?: string; children: ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      {children}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
