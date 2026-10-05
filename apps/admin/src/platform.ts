@@ -5,7 +5,7 @@ import { useAuth } from './auth';
 
 export const STOREFRONT_ORIGIN = (
   (import.meta.env.VITE_STOREFRONT_ORIGIN as string | undefined)
-  || (import.meta.env.PROD ? 'https://commerce-platform-rho.vercel.app' : 'http://localhost:5174')
+  || (import.meta.env.PROD ? 'https://mariseh.com' : 'http://localhost:5174')
 ).replace(/\/$/, '');
 
 // ─── Current store selection (per browser) ────────────────────────────────────

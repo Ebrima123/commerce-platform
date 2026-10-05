@@ -114,7 +114,7 @@ const FEATURES = [
 const FAQS = [
   { q: 'Do I need a computer or tech skills?', a: 'No. You can set up and run your whole store from your phone. If you can use WhatsApp, you can use Store Builder.' },
   { q: 'How do customers pay?', a: 'Customers send their order to you on WhatsApp and pay you directly — with Wave or cash on delivery, the same way you already sell.' },
-  { q: 'What will my store link look like?', a: 'Something like commerce-platform-rho.vercel.app/@yourshop. You can share it anywhere — WhatsApp, Facebook, Instagram, TikTok.' },
+  { q: 'What will my store link look like?', a: 'Something like mariseh.com/@yourshop. You can share it anywhere — WhatsApp, Facebook, Instagram, TikTok.' },
   { q: 'How much does it cost?', a: 'You can create your store and try everything first. We’ll show you the monthly price clearly before anything is charged.' },
   { q: 'Can I change the design later?', a: 'Yes, any time. Switch between the Marketplace and Boutique styles, change colours, photos and text, and see it live.' },
 ];
