@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMyStore, useMyStores, useSwitchStore, storefrontUrl } from '../platform';
 import {
   LayoutDashboard, Package, ShoppingCart, Palette, Globe, CreditCard, Settings,
-  LogOut, Menu, X, Store, ExternalLink, Loader2, ChevronsUpDown, Check, Plus,
+  LogOut, Menu, X, Store, ExternalLink, Loader2, ChevronsUpDown, Check, Plus, LayoutGrid,
 } from 'lucide-react';
 import { api } from '@cp/shared';
 import { Button, cn } from '@cp/ui';
@@ -21,6 +21,7 @@ const NAV = [
     { to: '/domains', label: 'Domains', icon: Globe },
   ] },
   { section: 'Account', items: [
+    { to: '/stores', label: 'My stores', icon: LayoutGrid },
     { to: '/billing', label: 'Billing', icon: CreditCard },
     { to: '/settings', label: 'Settings', icon: Settings },
   ] },
@@ -114,6 +115,11 @@ function StoreSwitcher({ onNavigate }: { onNavigate?: () => void }) {
             ))}
           </ul>
           <div className="border-t border-border/60 p-1">
+            <Link to="/stores" role="menuitem" onClick={() => { setOpen(false); onNavigate?.(); }}
+              className="flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium hover:bg-muted">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted"><LayoutGrid className="h-4 w-4" /></span>
+              Manage all stores
+            </Link>
             <Link to="/start?new=1" role="menuitem" onClick={() => { setOpen(false); onNavigate?.(); }}
               className="flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium hover:bg-muted">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-dashed border-border"><Plus className="h-4 w-4" /></span>
