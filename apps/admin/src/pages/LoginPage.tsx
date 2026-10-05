@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Loader2, Store } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Button, Card, Input, Label } from '@cp/ui';
 import { useAuth } from '../auth';
 
@@ -29,9 +29,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-brand-foreground shadow-sm">
-            <Store className="h-5 w-5" />
-          </div>
+          <img src="/mariseh-logo.png" alt="Mariseh" className="mb-4 h-14 w-14" />
           <h1 className="text-xl font-semibold tracking-tight">Sign in to your store</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage products, orders and your online store.</p>
         </div>

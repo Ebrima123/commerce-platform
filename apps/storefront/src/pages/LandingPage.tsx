@@ -150,7 +150,7 @@ export default function LandingPage() {
       <header className={cn('sticky top-0 z-40 bg-white/90 backdrop-blur-md transition-shadow', scrolled && 'shadow-[0_1px_12px_rgba(0,0,0,0.06)]')}>
         <div className={cn(wrap, 'flex h-16 items-center justify-between gap-4')}>
           <a href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl text-white" style={{ background: ACCENT }}><Store className="h-5 w-5" /></span>
+            <img src="/mariseh-logo.png" alt="" className="h-9 w-9" />
             Mariseh
           </a>
           <nav className="hidden items-center gap-8 text-sm font-medium text-zinc-600 md:flex">
@@ -388,7 +388,7 @@ export default function LandingPage() {
 
       <footer className="border-t border-zinc-100 pb-28 pt-10 md:pb-10">
         <div className={cn(wrap, 'flex flex-col items-center justify-between gap-4 text-sm text-zinc-500 sm:flex-row')}>
-          <p className="flex items-center gap-2 font-semibold text-zinc-900"><Store className="h-4 w-4" style={{ color: ACCENT }} /> Mariseh</p>
+          <p className="flex items-center gap-2 font-semibold text-zinc-900"><img src="/mariseh-logo.png" alt="" className="h-6 w-6" /> Mariseh</p>
           <div className="flex gap-6">
             <a href={SIGN_IN} className="hover:text-zinc-900">Sign in</a>
             <a href={START} className="hover:text-zinc-900">Create a store</a>

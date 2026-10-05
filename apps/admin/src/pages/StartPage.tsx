@@ -259,7 +259,7 @@ export default function StartPage() {
     <div className="min-h-screen bg-muted/40">
       <header className="flex h-16 items-center justify-between px-4 sm:px-8">
         <Link to="/" className="flex items-center gap-2 text-sm font-semibold">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-brand-foreground"><Store className="h-4 w-4" /></span>
+          <img src="/mariseh-logo.png" alt="" className="h-8 w-8" />
           Mariseh
         </Link>
         {!user ? <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground">Sign in</Link>

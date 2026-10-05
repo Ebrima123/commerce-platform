@@ -208,7 +208,7 @@ export function AdminLayout() {
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur-sm lg:hidden">
           <Button variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label="Open navigation"><Menu className="h-5 w-5" /></Button>
-          <Link to="/" className="text-sm font-semibold">Mariseh</Link>
+          <Link to="/" className="flex items-center gap-2 text-sm font-semibold"><img src="/mariseh-logo.png" alt="" className="h-7 w-7" />Mariseh</Link>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <Outlet />
