@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ImageIcon, MessageCircle, Package, Quote, Search } from 'lucide-react';
-import { safeHref, type ListItem, type Section, type SettingValue } from '@cp/shared';
+import { INDUSTRIES, safeHref, type ListItem, type Section, type SettingValue } from '@cp/shared';
 import { EmptyState, Input, Skeleton, cn } from '@cp/ui';
 import { useStore, useStoreProducts } from '../store';
 import { ProductCard } from '../components/ProductCard';
@@ -12,10 +12,25 @@ import { FEATURE_ICON_COMPONENTS } from './icons';
 const str = (v: SettingValue | undefined) => (typeof v === 'string' ? v : v == null ? '' : String(v));
 const list = (v: SettingValue | undefined) => (Array.isArray(v) ? (v as ListItem[]) : []);
 
+/** Link targets from settings: "whatsapp" opens a chat with the store; everything else must be a safe URL. */
+function useResolveHref() {
+  const { store } = useStore();
+  const wa = store?.whatsapp.replace(/\D/g, '') ?? '';
+  return (href: unknown) => (href === 'whatsapp' ? (wa ? `https://wa.me/${wa}` : undefined) : safeHref(href));
+}
+
+/** Category tiles → product grid: filter by name and scroll to it. */
+const CATEGORY_EVENT = 'cp:category';
+function showCategory(name: string) {
+  window.dispatchEvent(new CustomEvent(CATEGORY_EVENT, { detail: name }));
+  document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 /** Theme-aware button (brand colour + the store's corner style). */
 export function ThemeButton({ href, children, variant = 'solid', className }: {
   href?: string; children: ReactNode; variant?: 'solid' | 'outline' | 'light'; className?: string;
 }) {
+  const resolve = useResolveHref();
   const cls = cn(
     'inline-flex h-11 items-center justify-center gap-2 px-6 text-sm font-semibold transition-opacity hover:opacity-90 rounded-[var(--btn-radius)]',
     variant === 'solid' && 'bg-brand text-brand-foreground',
@@ -23,7 +38,7 @@ export function ThemeButton({ href, children, variant = 'solid', className }: {
     variant === 'light' && 'bg-white text-zinc-900',
     className,
   );
-  const safe = safeHref(href);
+  const safe = resolve(href);
   if (!safe) return <span className={cls}>{children}</span>;
   if (safe.startsWith('/')) return <Link to={safe} className={cls}>{children}</Link>;
   const external = /^https?:/.test(safe);
@@ -34,9 +49,9 @@ function Heading({ children, className, as: Tag = 'h2' }: { children: ReactNode;
   return <Tag className={cn('font-heading font-semibold tracking-tight', className)}>{children}</Tag>;
 }
 
-function Img({ src, alt, className }: { src: string; alt: string; className?: string }) {
+function Img({ src, alt, className, eager }: { src: string; alt: string; className?: string; eager?: boolean }) {
   return src
-    ? <img src={src} alt={alt} loading="lazy" className={cn('h-full w-full object-cover', className)} />
+    ? <img src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} className={cn('h-full w-full object-cover', className)} />
     : <div className={cn('flex h-full w-full items-center justify-center bg-muted', className)}><ImageIcon className="h-8 w-8 text-muted-foreground/40" /></div>;
 }
 
@@ -45,7 +60,7 @@ const container = 'mx-auto max-w-6xl px-4 sm:px-6';
 // ─── Sections ─────────────────────────────────────────────────────────────────
 
 function Announcement({ s }: { s: Section['settings'] }) {
-  const href = safeHref(s.link);
+  const href = useResolveHref()(s.link);
   const text = str(s.text);
   if (!text) return null;
   const inner = <p className="px-4 py-2 text-center text-xs font-medium sm:text-sm">{text}</p>;
@@ -53,7 +68,7 @@ function Announcement({ s }: { s: Section['settings'] }) {
     <div className="bg-brand text-brand-foreground">
       {!href ? inner
         : href.startsWith('/') ? <Link to={href} className="block hover:underline">{inner}</Link>
-        : <a href={href} className="block hover:underline">{inner}</a>}
+        : <a href={href} className="block hover:underline" {...(/^https?:/.test(href) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{inner}</a>}
     </div>
   );
 }
@@ -62,7 +77,9 @@ function Hero({ s }: { s: Section['settings'] }) {
   const { store } = useStore();
   const layout = str(s.layout) || 'overlay';
   const image = str(s.imageUrl) || store?.bannerUrl || '';
-  const height = { sm: 'py-12 sm:py-16', md: 'py-16 sm:py-24', lg: 'py-24 sm:py-36' }[str(s.height) || 'md'];
+  // Phones get tighter spacing so the hero (and its photo) fits the first screen.
+  const heights: Record<string, string> = { sm: 'py-8 sm:py-16', md: 'py-12 sm:py-24', lg: 'py-16 sm:py-36' };
+  const height = heights[str(s.height)] ?? heights.md;
   const content = (light: boolean) => (
     <>
       <Heading as="h1" className="text-4xl leading-[1.05] sm:text-5xl lg:text-6xl">{str(s.heading)}</Heading>
@@ -72,10 +89,11 @@ function Hero({ s }: { s: Section['settings'] }) {
   );
 
   if (layout === 'split') {
+    // Phones: photo first (it sells the product), text below. Desktop: side by side.
     return (
-      <section className={cn(container, 'grid items-center gap-10 md:grid-cols-2', height)}>
-        <div>{content(false)}</div>
-        <div className="aspect-[4/3] overflow-hidden rounded-[var(--card-radius)]"><Img src={image} alt="" /></div>
+      <section className={cn(container, 'grid items-center gap-6 md:grid-cols-2 md:gap-10', 'pt-4', height.replace(/^py-\S+/, 'pb-10'))}>
+        <div className="order-2 md:order-1">{content(false)}</div>
+        <div className="order-1 aspect-square overflow-hidden rounded-[var(--card-radius)] sm:aspect-[4/3] md:order-2"><Img src={image} alt="" eager /></div>
       </section>
     );
   }
@@ -96,21 +114,47 @@ function Hero({ s }: { s: Section['settings'] }) {
 }
 
 function FeaturedProducts({ s }: { s: Section['settings'] }) {
-  const { data: products = [], isLoading } = useStoreProducts();
+  const { store, preview } = useStore();
+  const { data: realProducts = [], isLoading } = useStoreProducts();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState(str(s.category));
   const showSearch = s.showSearch !== false;
   const limit = Number(s.limit) || 12;
   const cols = { '2': 'lg:grid-cols-2', '3': 'lg:grid-cols-3', '4': 'lg:grid-cols-4' }[str(s.columns) || '4'];
+  const ratio = (['square', 'portrait', 'landscape'] as const).find(r => r === str(s.imageRatio)) ?? 'square';
+
+  // In the editor, an empty store shows its industry's sample products so the
+  // merchant sees the finished look. Live visitors never see samples.
+  const samples = useMemo(() => {
+    const preset = store?.theme.industry ? INDUSTRIES[store.theme.industry] : null;
+    return (preset?.samples ?? []).map((p, i) => ({
+      id: `sample-${i}`, name: p.name, description: '', price: String(p.price), stock_quantity: 10, in_stock: true,
+      category: p.category, image_url: p.imageUrl, images: [],
+    }));
+  }, [store?.theme.industry]);
+  const showingSamples = preview && !isLoading && realProducts.length === 0 && samples.length > 0;
+  const products = showingSamples ? samples : realProducts;
 
   const categories = useMemo(() => [...new Set(products.map(p => p.category).filter(Boolean))].sort(), [products]);
+
+  // Category tiles elsewhere on the page filter this grid.
+  useEffect(() => {
+    const onCategory = (e: Event) => {
+      const name = String((e as CustomEvent).detail ?? '');
+      const match = categories.find(c => c.toLowerCase() === name.toLowerCase());
+      setCategory(match ?? '');
+      setQuery('');
+    };
+    window.addEventListener(CATEGORY_EVENT, onCategory);
+    return () => window.removeEventListener(CATEGORY_EVENT, onCategory);
+  }, [categories]);
   const fixedCategory = str(s.category);
   const visible = products
     .filter(p => (!category || p.category === category) && (!query || p.name.toLowerCase().includes(query.toLowerCase())))
     .slice(0, query || category !== fixedCategory ? 200 : limit);
 
   return (
-    <section id="products" className={cn(container, 'scroll-mt-20 py-14 sm:py-20')}>
+    <section id="products" className={cn(container, 'scroll-mt-20 py-10 sm:py-20')}>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           {str(s.title) && <Heading className="text-2xl sm:text-3xl">{str(s.title)}</Heading>}
@@ -142,9 +186,16 @@ function FeaturedProducts({ s }: { s: Section['settings'] }) {
         <EmptyState icon={<Package className="h-5 w-5" />} title={products.length ? 'No products match' : 'Products coming soon'}
           description={products.length ? 'Try a different search or category.' : 'Add products in your admin and they will appear here.'} />
       ) : (
-        <div className={cn('grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3', cols)}>
-          {visible.map(p => <ProductCard key={p.id} product={p} />)}
-        </div>
+        <>
+          {showingSamples && (
+            <p className="mb-6 rounded-[var(--card-radius)] border border-dashed border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Sample products</span> — only you can see these. Add your own products in the admin and they replace these on your live store.
+            </p>
+          )}
+          <div className={cn('grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3', cols)}>
+            {visible.map(p => <ProductCard key={p.id} product={p} ratio={ratio} sample={showingSamples} />)}
+          </div>
+        </>
       )}
     </section>
   );
@@ -152,22 +203,27 @@ function FeaturedProducts({ s }: { s: Section['settings'] }) {
 
 function Categories({ s }: { s: Section['settings'] }) {
   const { data: products = [] } = useStoreProducts();
+  // Tiles set in the editor win; otherwise derive them from product categories.
   const cats = useMemo(() => {
+    const tiles = list(s.items).filter(t => t.name?.trim());
+    if (tiles.length) return tiles.map(t => [t.name, t.imageUrl ?? ''] as [string, string]);
     const map = new Map<string, string>();
     for (const p of products) if (p.category && !map.has(p.category)) map.set(p.category, p.image_url);
     return [...map.entries()];
-  }, [products]);
+  }, [products, s.items]);
   if (!cats.length) return null;
   return (
-    <section className={cn(container, 'py-14 sm:py-20')}>
+    <section className={cn(container, 'py-10 sm:py-20')}>
       {str(s.title) && <Heading className="mb-8 text-2xl sm:text-3xl">{str(s.title)}</Heading>}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        {cats.slice(0, 8).map(([name, img]) => (
-          <a key={name} href="#products" className="group relative aspect-[4/3] overflow-hidden rounded-[var(--card-radius)]">
-            <Img src={img} alt="" className="transition-transform duration-300 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <span className="absolute bottom-3 left-3 text-sm font-semibold text-white">{name}</span>
-          </a>
+      <div className={cn('grid grid-cols-2 gap-3 sm:gap-4', cats.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-3 lg:grid-cols-4')}>
+        {cats.slice(0, 8).map(([name, img], i) => (
+          <button key={name} type="button" onClick={() => showCategory(name)}
+            className={cn('group relative aspect-[4/5] overflow-hidden rounded-[var(--card-radius)] text-left sm:aspect-[4/3]',
+              cats.length === 3 && i === 2 && 'col-span-2 aspect-[2/1] sm:col-span-1 sm:aspect-[4/3]')}>
+            <Img src={img} alt="" className="object-top transition-transform duration-300 group-hover:scale-105" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+            <span className="absolute bottom-3 left-3 right-3 text-sm font-semibold text-white sm:text-base">{name}</span>
+          </button>
         ))}
       </div>
     </section>
@@ -177,7 +233,7 @@ function Categories({ s }: { s: Section['settings'] }) {
 function ImageText({ s }: { s: Section['settings'] }) {
   const right = str(s.imagePosition) === 'right';
   return (
-    <section className={cn(container, 'grid items-center gap-10 py-14 sm:py-20 md:grid-cols-2')}>
+    <section className={cn(container, 'grid items-center gap-10 py-10 sm:py-20 md:grid-cols-2')}>
       <div className={cn('aspect-[4/3] overflow-hidden rounded-[var(--card-radius)]', right && 'md:order-2')}><Img src={str(s.imageUrl)} alt="" /></div>
       <div>
         <Heading className="text-2xl sm:text-3xl">{str(s.heading)}</Heading>
@@ -192,9 +248,9 @@ function Features({ s }: { s: Section['settings'] }) {
   const items = list(s.items);
   return (
     <section className="border-y border-border/60 bg-muted/40">
-      <div className={cn(container, 'py-12 sm:py-16')}>
+      <div className={cn(container, 'py-10 sm:py-16')}>
         {str(s.title) && <Heading className="mb-8 text-center text-2xl sm:text-3xl">{str(s.title)}</Heading>}
-        <div className={cn('grid gap-8 sm:grid-cols-2', items.length >= 3 && 'lg:grid-cols-3', items.length >= 4 && 'lg:grid-cols-4')}>
+        <div className={cn('grid gap-6 sm:grid-cols-2 sm:gap-8', items.length >= 3 && 'lg:grid-cols-3', items.length >= 4 && 'lg:grid-cols-4')}>
           {items.map((item, i) => {
             const Icon = FEATURE_ICON_COMPONENTS[item.icon] ?? FEATURE_ICON_COMPONENTS.star;
             return (
@@ -216,7 +272,7 @@ function Features({ s }: { s: Section['settings'] }) {
 function Testimonials({ s }: { s: Section['settings'] }) {
   const items = list(s.items);
   return (
-    <section className={cn(container, 'py-14 sm:py-20')}>
+    <section className={cn(container, 'py-10 sm:py-20')}>
       {str(s.title) && <Heading className="mb-10 text-center text-2xl sm:text-3xl">{str(s.title)}</Heading>}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {items.map((t, i) => (
@@ -234,7 +290,7 @@ function Testimonials({ s }: { s: Section['settings'] }) {
 function Gallery({ s }: { s: Section['settings'] }) {
   const images = list(s.images);
   return (
-    <section className={cn(container, 'py-14 sm:py-20')}>
+    <section className={cn(container, 'py-10 sm:py-20')}>
       {str(s.title) && <Heading className="mb-8 text-2xl sm:text-3xl">{str(s.title)}</Heading>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {images.map((img, i) => (
@@ -251,7 +307,7 @@ function Gallery({ s }: { s: Section['settings'] }) {
 function RichText({ s }: { s: Section['settings'] }) {
   const center = str(s.align) !== 'left';
   return (
-    <section className={cn(container, 'py-14 sm:py-20')}>
+    <section className={cn(container, 'py-10 sm:py-20')}>
       <div className={cn('max-w-2xl', center && 'mx-auto text-center')}>
         {str(s.heading) && <Heading className="text-2xl sm:text-3xl">{str(s.heading)}</Heading>}
         {str(s.body) && <p className="mt-4 whitespace-pre-line leading-relaxed text-muted-foreground">{str(s.body)}</p>}
@@ -264,7 +320,7 @@ function WhatsAppCta({ s }: { s: Section['settings'] }) {
   const { store } = useStore();
   const wa = store?.whatsapp.replace(/\D/g, '') ?? '';
   return (
-    <section className={cn(container, 'py-14 sm:py-20')}>
+    <section className={cn(container, 'py-10 sm:py-20')}>
       <div className="flex flex-col items-start gap-6 rounded-[var(--card-radius)] bg-brand px-6 py-10 text-brand-foreground sm:flex-row sm:items-center sm:justify-between sm:px-10">
         <div className="max-w-xl">
           <Heading className="text-2xl">{str(s.heading)}</Heading>

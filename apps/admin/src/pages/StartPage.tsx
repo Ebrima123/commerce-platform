@@ -6,7 +6,7 @@ import {
   Sparkles, X, type LucideIcon,
 } from 'lucide-react';
 import {
-  api, ApiError, BRAND_SWATCHES, INDUSTRIES, TEMPLATES, generateTheme, slugify,
+  api, ApiError, BRAND_SWATCHES, FONTS, INDUSTRIES, TEMPLATES, generateTheme, slugify,
   type IndustryKey, type PlatformStore, type SlugCheck, type TemplateKey,
 } from '@cp/shared';
 import { Button, Card, Input, Label, cn } from '@cp/ui';
@@ -38,6 +38,50 @@ function useSlugCheck(slug: string) {
 }
 
 // ─── Template mini-mockup ─────────────────────────────────────────────────────
+
+/** Mini version of the industry's hand-designed store: real hero photo, fonts, colour and corners. */
+function RecommendedMock({ industry, color }: { industry: IndustryKey; color: string }) {
+  const preset = INDUSTRIES[industry];
+  const hero = preset.sections.find(s => s.type === 'hero')?.settings ?? {};
+  const image = String(hero.imageUrl ?? '').replace('w=1200', 'w=400');
+  const layout = String(hero.layout ?? 'overlay');
+  const radius = { none: '0px', md: '4px', xl: '8px', full: '999px' }[preset.brand.radius];
+  const surface = { white: '#ffffff', warm: '#faf6ef', dark: '#18181b' }[preset.brand.surface];
+  const headingFamily = FONTS[preset.brand.headingFont].family;
+  const heading = String(hero.heading ?? preset.label);
+  const ink = preset.brand.surface === 'dark' ? '#fafafa' : '#18181b';
+
+  return (
+    <div className="aspect-[4/3] w-full overflow-hidden rounded-lg border border-border/60" style={{ background: surface }}>
+      <div className="h-2.5" style={{ background: color }} />
+      {layout === 'overlay' ? (
+        <div className="relative h-[58%]">
+          <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/10" />
+          <p className="absolute bottom-2 left-2 right-8 line-clamp-2 text-[9px] font-semibold leading-tight text-white" style={{ fontFamily: headingFamily }}>{heading}</p>
+        </div>
+      ) : layout === 'split' ? (
+        <div className="grid h-[58%] grid-cols-2 items-center gap-1.5 p-2">
+          <div>
+            <p className="line-clamp-3 text-[9px] font-semibold leading-tight" style={{ fontFamily: headingFamily, color: ink }}>{heading}</p>
+            <div className="mt-1.5 h-2 w-10" style={{ background: color, borderRadius: radius }} />
+          </div>
+          <img src={image} alt="" className="h-full w-full object-cover" style={{ borderRadius: radius }} loading="lazy" />
+        </div>
+      ) : (
+        <div className="flex h-[58%] flex-col items-center justify-center gap-1.5 px-3 text-center">
+          <p className="line-clamp-2 text-[9px] font-semibold leading-tight" style={{ fontFamily: headingFamily, color: ink }}>{heading}</p>
+          <div className="h-2 w-10" style={{ background: color, borderRadius: radius }} />
+        </div>
+      )}
+      <div className="grid grid-cols-4 gap-1 px-2">
+        {preset.samples.slice(0, 4).map(p => (
+          <img key={p.name} src={p.imageUrl.replace('w=600', 'w=120')} alt="" className="aspect-square w-full object-cover" style={{ borderRadius: radius }} loading="lazy" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function TemplateMock({ template, color }: { template: TemplateKey; color: string }) {
   const warm = template === 'boutique';
@@ -90,8 +134,16 @@ export default function StartPage() {
   const [slugEdited, setSlugEdited] = useState(false);
   const [whatsapp, setWhatsapp] = useState('');
   const [industry, setIndustry] = useState<IndustryKey | null>(null);
-  const [template, setTemplate] = useState<TemplateKey>('minimal');
-  const [color, setColor] = useState(BRAND_SWATCHES[0]);
+  const [template, setTemplate] = useState<TemplateKey>('recommended');
+  const [color, setColor] = useState(INDUSTRIES.general.brand.primaryColor);
+  const [colorPicked, setColorPicked] = useState(false);
+  // Each industry has a designed brand colour — use it until the merchant picks their own.
+  const chooseIndustry = (key: IndustryKey) => {
+    setIndustry(key);
+    if (!colorPicked) setColor(INDUSTRIES[key].brand.primaryColor);
+  };
+  const pickColor = (c: string) => { setColor(c); setColorPicked(true); };
+  const swatches = [...new Set([...(industry ? INDUSTRIES[industry].colors : []), ...BRAND_SWATCHES])].slice(0, 12);
   const [account, setAccount] = useState({ full_name: '', username: '', email: '', password: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -217,7 +269,7 @@ export default function StartPage() {
                   const Icon = INDUSTRY_ICONS[INDUSTRIES[key].icon] ?? Store;
                   const active = industry === key;
                   return (
-                    <button key={key} type="button" role="radio" aria-checked={active} onClick={() => setIndustry(key)}
+                    <button key={key} type="button" role="radio" aria-checked={active} onClick={() => chooseIndustry(key)}
                       className={cn('flex flex-col items-start gap-3 rounded-xl border bg-card p-4 text-left transition-all',
                         active ? 'border-foreground ring-1 ring-foreground' : 'border-border hover:border-foreground/40')}>
                       <Icon className="h-5 w-5" />
@@ -237,10 +289,23 @@ export default function StartPage() {
                   return (
                     <button key={key} type="button" role="radio" aria-checked={active} onClick={() => setTemplate(key)}
                       className={cn('rounded-xl border bg-card p-3 text-left transition-all',
+                        key === 'recommended' && 'sm:col-span-3 sm:grid sm:grid-cols-[1.3fr_1fr] sm:items-center sm:gap-5',
                         active ? 'border-foreground ring-1 ring-foreground' : 'border-border hover:border-foreground/40')}>
-                      <TemplateMock template={key} color={color} />
-                      <p className="mt-3 text-sm font-medium">{TEMPLATES[key].label}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{TEMPLATES[key].description}</p>
+                      {key === 'recommended'
+                        ? <RecommendedMock industry={industry ?? 'general'} color={color} />
+                        : <TemplateMock template={key} color={color} />}
+                      <div>
+                        <p className="mt-3 flex items-center gap-2 text-sm font-medium sm:mt-0">
+                          {TEMPLATES[key].label}
+                          {key === 'recommended' && (
+                            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">Best for {INDUSTRIES[industry ?? 'general'].label.toLowerCase()}</span>
+                          )}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {key === 'recommended'
+                            ? 'A complete store designed for how your customers shop — layout, fonts, colours and starter text. Launch it as-is or tweak anything later.'
+                            : TEMPLATES[key].description}
+                        </p>                      </div>
                     </button>
                   );
                 })}
@@ -248,13 +313,13 @@ export default function StartPage() {
               <div>
                 <Label>Brand colour</Label>
                 <div className="mt-2 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Brand colour">
-                  {BRAND_SWATCHES.map(c => (
-                    <button key={c} type="button" role="radio" aria-checked={color === c} aria-label={c} onClick={() => setColor(c)}
+                  {swatches.map(c => (
+                    <button key={c} type="button" role="radio" aria-checked={color === c} aria-label={c} onClick={() => pickColor(c)}
                       className={cn('h-8 w-8 rounded-full ring-offset-2 ring-offset-background transition-shadow', color === c && 'ring-2 ring-foreground')}
                       style={{ background: c }} />
                   ))}
                   <label className="relative h-8 w-8 cursor-pointer overflow-hidden rounded-full border border-dashed border-border" title="Custom colour">
-                    <input type="color" value={color} onChange={e => setColor(e.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" aria-label="Custom colour" />
+                    <input type="color" value={color} onChange={e => pickColor(e.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" aria-label="Custom colour" />
                     <span className="flex h-full items-center justify-center text-xs text-muted-foreground">+</span>
                   </label>
                 </div>

@@ -1,13 +1,18 @@
 import { Link } from 'react-router-dom';
 import { ImageIcon } from 'lucide-react';
 import { fmtDalasi, type Product } from '@cp/shared';
+import { cn } from '@cp/ui';
 import { useStoreHref } from './StoreShell';
 
-export function ProductCard({ product }: { product: Product }) {
+const RATIO = { square: 'aspect-square', portrait: 'aspect-[3/4]', landscape: 'aspect-[4/3]' } as const;
+
+export function ProductCard({ product, ratio = 'square', sample = false }: {
+  product: Product; ratio?: keyof typeof RATIO; sample?: boolean;
+}) {
   const href = useStoreHref();
-  return (
-    <Link to={href(`/products/${product.id}`)} className="group block">
-      <div className="aspect-square overflow-hidden rounded-[var(--card-radius)] border border-border/60 bg-muted/40">
+  const body = (
+    <>
+      <div className={cn(RATIO[ratio], 'overflow-hidden rounded-[var(--card-radius)] border border-border/60 bg-muted/40')}>
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} loading="lazy"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
@@ -22,6 +27,9 @@ export function ProductCard({ product }: { product: Product }) {
           {!product.in_stock && <span className="text-xs text-muted-foreground">Sold out</span>}
         </div>
       </div>
-    </Link>
+    </>
   );
+  // Sample products (editor preview only) have no product page.
+  if (sample) return <div className="group block">{body}</div>;
+  return <Link to={href(`/products/${product.id}`)} className="group block">{body}</Link>;
 }
