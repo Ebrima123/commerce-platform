@@ -37,9 +37,11 @@ Create **two Vercel projects** from this repo — one per app:
 | admin | `apps/admin` | `VITE_STOREFRONT_ORIGIN=https://<storefront domain>`, `VITE_PLATFORM_DOMAIN=<root domain>` (once you have one), `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET`, `VITE_CLOUDINARY_API_KEY` |
 | storefront | `apps/storefront` | `VITE_ADMIN_ORIGIN=https://<admin domain>`, `VITE_PLATFORM_DOMAIN=<root domain>` (once you have one) |
 
-Leave `VITE_API_URL` empty: each app's `vercel.json` rewrites `/api/*` to the
-Render backend (same as the dev proxy), so no CORS changes are needed. Vercel
-detects the npm workspace and installs from the repo root.
+In production the apps call the Render backend directly (override with
+`VITE_API_URL`). The backend allows them via CORS: `PLATFORM_FRONTEND_ORIGINS`
+in `estore-backend/estore/settings.py` (defaults to the two Vercel URLs) and
+`CORS_ALLOWED_ORIGIN_REGEXES` for store subdomains later. `VITE_STOREFRONT_ORIGIN`
+/ `VITE_ADMIN_ORIGIN` default to the current Vercel URLs too.
 
 Store subdomains (`mystore.<root domain>`) need a custom domain on the
 storefront project with a wildcard `*.<root domain>` entry (Vercel requires its

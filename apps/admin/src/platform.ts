@@ -2,8 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { api, type PlatformStore } from '@cp/shared';
 import { useAuth } from './auth';
 
-export const STOREFRONT_ORIGIN =
-  ((import.meta.env.VITE_STOREFRONT_ORIGIN as string | undefined) ?? 'http://localhost:5174').replace(/\/$/, '');
+export const STOREFRONT_ORIGIN = (
+  (import.meta.env.VITE_STOREFRONT_ORIGIN as string | undefined)
+  || (import.meta.env.PROD ? 'https://commerce-platform-rho.vercel.app' : 'http://localhost:5174')
+).replace(/\/$/, '');
 
 /** The signed-in merchant's Store Builder store (null if they haven't created one). */
 export function useMyStore() {

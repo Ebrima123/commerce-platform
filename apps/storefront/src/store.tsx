@@ -43,7 +43,8 @@ async function loadStore(slug: string): Promise<StoreView> {
   };
 }
 
-const ADMIN_ORIGIN = (import.meta.env.VITE_ADMIN_ORIGIN as string | undefined) ?? 'http://localhost:5173';
+const ADMIN_ORIGIN = ((import.meta.env.VITE_ADMIN_ORIGIN as string | undefined)
+  || (import.meta.env.PROD ? 'https://commerce-platform-syp7.vercel.app' : 'http://localhost:5173')).replace(/\/$/, '');
 
 interface StoreState {
   slug: string | null;
