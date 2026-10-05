@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  api, ApiError, normalizeTheme, resolveStoreSlug,
+  api, ApiError, normalizeTheme, resolveStoreLocation,
   type PreviewMessage, type Product, type PublicPlatformStore, type PublicStore, type Theme,
 } from '@cp/shared';
 
@@ -31,9 +31,18 @@ async function loadStore(slug: string): Promise<StoreView> {
       theme: normalizeTheme(s.theme, s.name), ownerId: s.owner_id, avatarUrl: s.avatar_url,
       description: s.description, bannerUrl: s.banner_url, whatsapp: s.whatsapp, location: s.location,
     };
-  } catch (e) {
-    if (!(e instanceof ApiError) || e.status !== 404) throw e;
+  } catch (platformError) {
+    // Not a platform store (404) — or the platform API is unavailable — so try
+    // an existing Alfudi seller with this username before giving up.
+    try {
+      return await loadLegacyStore(slug);
+    } catch {
+      throw platformError;
+    }
   }
+}
+
+async function loadLegacyStore(slug: string): Promise<StoreView> {
   const s = await api<PublicStore>(`/api/sellers/${encodeURIComponent(slug)}/`);
   const name = s.store_name || s.name;
   return {
@@ -48,6 +57,8 @@ const ADMIN_ORIGIN = ((import.meta.env.VITE_ADMIN_ORIGIN as string | undefined)
 
 interface StoreState {
   slug: string | null;
+  /** Router basename for path-based stores ("/@slug"), "" otherwise. */
+  basePath: string;
   store: StoreView | undefined;
   isLoading: boolean;
   isError: boolean;
@@ -61,7 +72,12 @@ interface StoreState {
 const StoreContext = createContext<StoreState | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const slug = useMemo(() => resolveStoreSlug(), []);
+  // Resolve once per page load; short links (/mystore/...) become /@mystore/...
+  const { slug, basePath } = useMemo(() => {
+    const loc = resolveStoreLocation();
+    if (loc.canonicalPath) window.history.replaceState(null, '', loc.canonicalPath + window.location.search + window.location.hash);
+    return loc;
+  }, []);
   const preview = useMemo(() => new URLSearchParams(window.location.search).get('preview') === '1' && window.parent !== window, []);
   const [draft, setDraft] = useState<Theme | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -98,7 +114,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <StoreContext.Provider value={{ slug, store, isLoading: !!slug && isLoading, isError, preview, highlightId, selectSection }}>
+    <StoreContext.Provider value={{ slug, basePath, store, isLoading: !!slug && isLoading, isError, preview, highlightId, selectSection }}>
       {children}
     </StoreContext.Provider>
   );

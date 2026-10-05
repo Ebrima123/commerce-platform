@@ -22,23 +22,18 @@ const PLATFORM_DOMAIN = (import.meta.env.VITE_PLATFORM_DOMAIN as string | undefi
 
 /**
  * Public address of a store:
- *   slug.<VITE_PLATFORM_DOMAIN>     once a custom (wildcard) domain is set up
- *   slug.localhost:5174             in local development
- *   <storefront>/?store=slug        otherwise (e.g. *.vercel.app can't have per-store subdomains)
+ *   https://slug.<VITE_PLATFORM_DOMAIN>   once a custom wildcard domain is set up
+ *   <storefront>/@slug                    otherwise (short form <storefront>/slug redirects here)
  */
 export function storefrontUrl(slug: string) {
   if (PLATFORM_DOMAIN) return `https://${slug}.${PLATFORM_DOMAIN}`;
-  const u = new URL(STOREFRONT_ORIGIN);
-  if (u.hostname === 'localhost') return `${u.protocol}//${slug}.${u.host}`;
-  return `${STOREFRONT_ORIGIN}/?store=${encodeURIComponent(slug)}`;
+  return `${STOREFRONT_ORIGIN}/@${encodeURIComponent(slug)}`;
 }
 
 /** How the wizard displays the address around the slug input. */
 export function storeAddressParts(): { prefix: string; suffix: string } {
   if (PLATFORM_DOMAIN) return { prefix: '', suffix: `.${PLATFORM_DOMAIN}` };
-  const u = new URL(STOREFRONT_ORIGIN);
-  if (u.hostname === 'localhost') return { prefix: '', suffix: `.${u.host}` };
-  return { prefix: `${u.host}/?store=`, suffix: '' };
+  return { prefix: `${new URL(STOREFRONT_ORIGIN).host}/@`, suffix: '' };
 }
 
 /** Storefront URL the theme editor embeds; it then streams the draft design in via postMessage. */

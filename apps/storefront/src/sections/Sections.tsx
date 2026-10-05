@@ -51,7 +51,9 @@ function Announcement({ s }: { s: Section['settings'] }) {
   const inner = <p className="px-4 py-2 text-center text-xs font-medium sm:text-sm">{text}</p>;
   return (
     <div className="bg-brand text-brand-foreground">
-      {href ? <a href={href} className="block hover:underline">{inner}</a> : inner}
+      {!href ? inner
+        : href.startsWith('/') ? <Link to={href} className="block hover:underline">{inner}</Link>
+        : <a href={href} className="block hover:underline">{inner}</a>}
     </div>
   );
 }

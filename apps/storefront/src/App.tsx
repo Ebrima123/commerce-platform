@@ -15,7 +15,7 @@ const queryClient = new QueryClient({
 });
 
 function Storefront() {
-  const { slug, store, isLoading, isError, preview } = useStore();
+  const { slug, basePath, store, isLoading, isError, preview } = useStore();
   if (!slug) return <NoStorePage />;
   if (isLoading) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
@@ -28,7 +28,7 @@ function Storefront() {
         <ComingSoonPage name={store.name} />
       ) : (
         <CartProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={basePath || undefined}>
             <Routes>
               <Route element={<StoreShell />}>
                 <Route index element={<HomePage />} />

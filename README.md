@@ -25,8 +25,9 @@ In development each app proxies `/api` to the backend set by `API_PROXY_TARGET`
 (defaults to the production backend), so no CORS changes are needed. Copy
 `apps/*/.env.example` to `.env` to override.
 
-A storefront is picked from the hostname: `mystore.localhost:5174` in dev,
-`mystore.<VITE_PLATFORM_DOMAIN>` in production. `?store=mystore` also works.
+A storefront is picked from the URL: `/@mystore` (canonical; `/mystore` redirects
+there), `mystore.<VITE_PLATFORM_DOMAIN>` once a wildcard domain is set up, or
+`mystore.localhost:5174` in dev. `?store=mystore` is used by the editor preview.
 
 ## Deploy (Vercel)
 
@@ -46,7 +47,8 @@ in `estore-backend/estore/settings.py` (defaults to the two Vercel URLs) and
 Store subdomains (`mystore.<root domain>`) need a custom domain on the
 storefront project with a wildcard `*.<root domain>` entry (Vercel requires its
 nameservers for wildcard domains). Until then, stores open at
-`https://<storefront>.vercel.app/?store=<slug>`.
+`https://<storefront>.vercel.app/@<slug>` — and the short form
+`https://<storefront>.vercel.app/<slug>` redirects there.
 
 ## Store wizard & designer
 
