@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  ArrowRight, Camera, Check, ChevronDown, Layers, Link2, Menu, MessageCircle, Paintbrush,
-  Search, ShoppingCart, Smartphone, Sparkles, Store, Wallet, Wifi, X, Home, LayoutGrid,
+  ArrowRight, Camera, Check, ChevronDown, Crown, Gem, Headphones, Laptop, Layers, Link2, Menu, MessageCircle, Paintbrush,
+  Search, Shirt, ShoppingBag, ShoppingCart, Smartphone, Sparkles, Store, Wallet, Watch, Wifi, X, Home, LayoutGrid,
+  type LucideIcon,
 } from 'lucide-react';
 import { INDUSTRIES, fmtDalasi, type IndustryKey } from '@cp/shared';
 import { cn } from '@cp/ui';
@@ -34,13 +35,21 @@ function CtaButton({ children, className, light }: { children: React.ReactNode; 
 
 // ─── Phone mock-up of a marketplace store ─────────────────────────────────────
 
+// Category circles in the mock-ups: four different aisles, like a real shop.
+const MOCK_CATEGORIES: Partial<Record<IndustryKey, [LucideIcon, string][]>> = {
+  fashion: [[Shirt, 'Kaftans'], [ShoppingBag, 'Bags & Shoes'], [Gem, 'Jewelry'], [Crown, 'Headwraps']],
+  electronics: [[Smartphone, 'Phones'], [Laptop, 'Laptops'], [Watch, 'Watches'], [Headphones, 'Audio']],
+};
+
 function PhoneMock({ industry = 'fashion' as IndustryKey, color = '#6b21a8', name = 'Awa Fashion House', className }: {
   industry?: IndustryKey; color?: string; name?: string; className?: string;
 }) {
   const preset = INDUSTRIES[industry];
   const items = preset.samples.slice(0, 4);
+  const categories = MOCK_CATEGORIES[industry] ?? MOCK_CATEGORIES.fashion!;
   return (
-    <div className={cn('relative w-[270px] shrink-0 rounded-[2.6rem] border-[10px] border-zinc-900 bg-zinc-900 shadow-2xl sm:w-[300px]', className)}>
+    // Shrinks with its container on very narrow phones instead of overflowing.
+    <div className={cn('relative w-full max-w-[270px] shrink-0 rounded-[2.6rem] border-[10px] border-zinc-900 bg-zinc-900 shadow-2xl sm:max-w-[300px]', className)}>
       <div className="absolute left-1/2 top-1.5 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-zinc-900" />
       <div className="overflow-hidden rounded-[1.9rem] bg-zinc-100">
         <div className="px-3 pb-2 pt-7 text-white" style={{ background: color }}>
@@ -54,21 +63,21 @@ function PhoneMock({ industry = 'fashion' as IndustryKey, color = '#6b21a8', nam
             <p className="absolute left-2.5 top-1/2 max-w-[60%] -translate-y-1/2 text-[12px] font-bold leading-tight text-white">New arrivals every week</p>
           </div>
           <div className="flex justify-between rounded-lg bg-white p-1.5">
-            {items.map(p => (
-              <div key={p.name} className="flex w-12 flex-col items-center gap-0.5">
-                <span className="h-9 w-9 overflow-hidden rounded-full bg-zinc-200"><Img src={p.imageUrl.replace('w=600', 'w=120')} alt="" eager /></span>
-                <span className="w-full truncate text-center text-[8px] text-zinc-600">{p.category}</span>
+            {categories.map(([Icon, label]) => (
+              <div key={label} className="flex min-w-0 flex-1 flex-col items-center gap-0.5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: `${color}14`, color }}><Icon className="h-4 w-4" /></span>
+                <span className="w-full truncate text-center text-[8px] text-zinc-600">{label}</span>
               </div>
             ))}
           </div>
           <div className="grid grid-cols-2 gap-1.5">
             {items.map((p, i) => (
-              <div key={p.name} className="overflow-hidden rounded-md bg-white">
+              <div key={p.name} className="min-w-0 overflow-hidden rounded-md bg-white">
                 <div className="aspect-square bg-zinc-200"><Img src={p.imageUrl.replace('w=600', 'w=240')} alt="" eager /></div>
                 <div className="p-1.5">
                   <p className="truncate text-[9px] text-zinc-700">{p.name}</p>
-                  <p className="text-[11px] font-bold" style={{ color }}>{fmtDalasi(p.price)}</p>
-                  {i < 2 && <p className="text-[8px] text-zinc-400">★ 4.{8 - i} · {i ? 86 : '1.2k'} sold</p>}
+                  <p className="truncate whitespace-nowrap text-[11px] font-bold tabular-nums" style={{ color }}>{fmtDalasi(p.price)}</p>
+                  {i < 2 && <p className="truncate whitespace-nowrap text-[8px] text-zinc-400"><span className="text-amber-500">★</span> 4.{8 - i} · {i ? 86 : '1.2k'} sold</p>}
                 </div>
               </div>
             ))}
@@ -114,12 +123,23 @@ export default function LandingPage() {
   const [menu, setMenu] = useState(false);
   const [open, setOpen] = useState<number | null>(0);
   const [scrolled, setScrolled] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
+  const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     document.title = 'Store Builder — Your online shop in 2 minutes';
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Show the sticky mobile button only once the hero's own button is gone.
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(([entry]) => setPastHero(!entry.isIntersecting && entry.boundingClientRect.top < 0));
+    io.observe(hero);
+    return () => io.disconnect();
   }, []);
 
   const nav = [['How it works', '#how'], ['Styles', '#styles'], ['Features', '#features'], ['FAQ', '#faq']];
@@ -154,7 +174,7 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden">
+      <section ref={heroRef} className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(70%_60%_at_80%_10%,rgba(5,150,105,0.12),transparent_70%),radial-gradient(50%_50%_at_0%_100%,rgba(234,88,12,0.08),transparent_70%)]" />
         <div className={cn(wrap, 'grid items-center gap-12 pb-16 pt-10 lg:grid-cols-[1.1fr_1fr] lg:pb-24 lg:pt-20')}>
           <div>
@@ -179,9 +199,13 @@ export default function LandingPage() {
           </div>
           <div className="relative flex justify-center lg:justify-end">
             <PhoneMock className="rotate-[-3deg]" />
-            <div className="absolute -left-2 bottom-16 hidden rounded-2xl bg-white p-3 shadow-xl sm:block lg:left-0">
-              <p className="flex items-center gap-2 text-sm font-semibold"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#25D366] text-white"><WhatsAppIcon className="h-4 w-4" /></span>New order!</p>
-              <p className="mt-1 text-xs text-zinc-500">2 × Wax Print Wrap Dress — {fmtDalasi(3300)}</p>
+            <div role="presentation" className="toast-in absolute bottom-10 left-0 flex max-w-[240px] items-center gap-3 rounded-2xl bg-white p-3 pr-4 shadow-[0_12px_32px_rgba(0,0,0,0.18)] ring-1 ring-black/5 sm:bottom-16 sm:left-[-0.5rem] lg:left-0">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white"><WhatsAppIcon className="h-[18px] w-[18px]" /></span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-zinc-900">New order!</span>
+                <span className="block truncate text-xs text-zinc-600">2 × Wax Print Wrap Dress</span>
+                <span className="block whitespace-nowrap text-xs font-bold text-emerald-700">{fmtDalasi(3300)}</span>
+              </span>
             </div>
           </div>
         </div>
@@ -224,7 +248,7 @@ export default function LandingPage() {
                 <span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-zinc-700 shadow-sm">Most popular</span>
                 <h3 className="mt-4 text-2xl font-bold">Marketplace</h3>
                 <p className="mt-2 text-zinc-600">Like SHEIN, Temu or Alfudi — big search bar, category icons and lots of products on one screen. Great when you sell many items.</p>
-                <div className="mt-8 flex flex-1 items-end justify-center"><PhoneMock industry="electronics" color="#0284c7" name="Coastal Phones" className="scale-90 sm:scale-100" /></div>
+                <div className="mt-8 flex flex-1 items-end justify-center"><PhoneMock industry="electronics" color="#0284c7" name="Coastal Phones" /></div>
               </div>
             </Reveal>
             <Reveal delay={100}>
@@ -258,12 +282,16 @@ export default function LandingPage() {
           <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
             {(Object.keys(INDUSTRIES) as IndustryKey[]).map((key, i) => (
               <Reveal key={key} delay={i * 60}>
-                <a href={START} className="group relative block aspect-[4/5] overflow-hidden rounded-2xl sm:aspect-[4/3]">
+                <a href={`${START}?category=${key}`} aria-label={`${INDUSTRIES[key].label}: start this store`}
+                  className="group relative block aspect-[4/5] overflow-hidden rounded-2xl ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.45)] hover:ring-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 active:translate-y-0 active:scale-[0.98] sm:aspect-[4/3]">
                   <Img src={heroImg(key, 700)} alt="" className="transition-transform duration-700 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-4 sm:p-5">
-                    <span className="text-base font-semibold sm:text-lg">{INDUSTRIES[key].label}</span>
-                    <span className="hidden h-9 w-9 items-center justify-center rounded-full bg-white text-zinc-900 sm:flex"><ArrowRight className="h-4 w-4" /></span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3.5 sm:p-5">
+                    <span className="min-w-0">
+                      <span className="block text-[15px] font-semibold leading-snug sm:text-lg">{INDUSTRIES[key].label}</span>
+                      <span className="mt-0.5 block text-xs text-white/70 transition-colors group-hover:text-white">Start this store</span>
+                    </span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-zinc-900 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:scale-110 sm:h-9 sm:w-9"><ArrowRight className="h-4 w-4" /></span>
                   </div>
                 </a>
               </Reveal>
@@ -306,16 +334,29 @@ export default function LandingPage() {
         <div className="mx-auto w-full max-w-3xl px-5 sm:px-8">
           <h2 className="text-center text-3xl font-extrabold tracking-tight sm:text-5xl">Questions</h2>
           <div className="mt-12 space-y-3">
-            {FAQS.map((f, i) => (
-              <div key={f.q} className="rounded-2xl bg-white shadow-sm">
-                <button type="button" onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i}
-                  className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left text-base font-semibold sm:text-lg">
-                  {f.q}
-                  <ChevronDown className={cn('h-5 w-5 shrink-0 text-zinc-400 transition-transform', open === i && 'rotate-180')} />
-                </button>
-                {open === i && <p className="px-6 pb-6 leading-relaxed text-zinc-600">{f.a}</p>}
-              </div>
-            ))}
+            {FAQS.map((f, i) => {
+              const isOpen = open === i;
+              return (
+                <div key={f.q} className={cn('rounded-2xl bg-white shadow-sm ring-1 transition-shadow', isOpen ? 'ring-emerald-200 shadow-md' : 'ring-transparent')}>
+                  <h3>
+                    <button type="button" id={`faq-q-${i}`} onClick={() => setOpen(isOpen ? null : i)} aria-expanded={isOpen} aria-controls={`faq-a-${i}`}
+                      className="flex min-h-14 w-full items-center justify-between gap-4 rounded-2xl px-5 py-4 text-left text-base font-semibold text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:px-6 sm:py-5 sm:text-lg">
+                      {f.q}
+                      <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors', isOpen ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500')}>
+                        <ChevronDown className={cn('h-5 w-5 transition-transform duration-300', isOpen && 'rotate-180')} />
+                      </span>
+                    </button>
+                  </h3>
+                  {/* Grid-rows trick animates the height without measuring it. */}
+                  <div id={`faq-a-${i}`} role="region" aria-labelledby={`faq-q-${i}`}
+                    className={cn('grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none', isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
+                    <div className="overflow-hidden">
+                      <p className="px-5 pb-5 text-[15px] leading-relaxed text-zinc-700 sm:px-6 sm:pb-6 sm:text-base">{f.a}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -333,7 +374,19 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-zinc-100 py-10">
+      {/* ── Sticky mobile CTA (after the hero has scrolled away) ── */}
+      <div aria-hidden={!pastHero} className={cn(
+        'fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md transition duration-300 ease-out md:hidden',
+        pastHero && !menu ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-full opacity-0',
+      )}>
+        <a href={START} tabIndex={pastHero ? undefined : -1}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-full text-[15px] font-semibold text-white shadow-sm active:scale-[0.98]"
+          style={{ background: ACCENT }}>
+          Create my store <ArrowRight className="h-5 w-5" />
+        </a>
+      </div>
+
+      <footer className="border-t border-zinc-100 pb-28 pt-10 md:pb-10">
         <div className={cn(wrap, 'flex flex-col items-center justify-between gap-4 text-sm text-zinc-500 sm:flex-row')}>
           <p className="flex items-center gap-2 font-semibold text-zinc-900"><Store className="h-4 w-4" style={{ color: ACCENT }} /> Store Builder</p>
           <div className="flex gap-6">

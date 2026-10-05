@@ -164,15 +164,20 @@ export default function StartPage() {
   // /start?new=1 — an existing merchant opening another store.
   const [params] = useSearchParams();
   const addingAnother = params.get('new') === '1';
+  // /start?category=fashion — chosen on the landing page, so it's already picked here.
+  const [preselected] = useState(() => {
+    const c = params.get('category');
+    return c && Object.prototype.hasOwnProperty.call(INDUSTRIES, c) ? c as IndustryKey : null;
+  });
 
   const [step, setStep] = useState<Step>('name');
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [slugEdited, setSlugEdited] = useState(false);
   const [whatsapp, setWhatsapp] = useState('');
-  const [industry, setIndustry] = useState<IndustryKey | null>(null);
+  const [industry, setIndustry] = useState<IndustryKey | null>(preselected);
   const [template, setTemplate] = useState<TemplateKey>('marketplace');
-  const [color, setColor] = useState(INDUSTRIES.general.brand.primaryColor);
+  const [color, setColor] = useState(INDUSTRIES[preselected ?? 'general'].brand.primaryColor);
   const [colorPicked, setColorPicked] = useState(false);
   // Each industry has a designed brand colour — use it until the merchant picks their own.
   const chooseIndustry = (key: IndustryKey) => {

@@ -13,12 +13,16 @@
   @keyframes hero-zoom { from { transform: scale(1.06); } to { transform: scale(1); } }
   .hero-zoom { animation: hero-zoom 1600ms cubic-bezier(.2,.7,.2,1) both; }
 
+  /* Notification that slides up and settles, like a phone banner. */
+  @keyframes toast-in { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
+  .toast-in { animation: toast-in 600ms cubic-bezier(.2,.8,.2,1) 900ms both; }
+
   .text-balance { text-wrap: balance; }
   .text-pretty { text-wrap: pretty; }
 
   @media (prefers-reduced-motion: reduce) {
     .reveal, .reveal.is-visible { opacity: 1; transform: none; transition: none; }
     .img-fade { opacity: 1; transition: none; }
-    .hero-zoom { animation: none; }
+    .hero-zoom, .toast-in { animation: none; }
   }
 }
