@@ -61,8 +61,8 @@ export function Reveal({ children, className, delay = 0 }: { children: ReactNode
   );
 }
 
-export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
-  return <p className={cn('text-xs font-semibold uppercase tracking-[0.18em] text-brand', className)}>{children}</p>;
+export function Eyebrow({ children, className, field }: { children: ReactNode; className?: string; field?: string }) {
+  return <p data-field={field} className={cn('text-xs font-semibold uppercase tracking-[0.18em] text-brand', className)}>{children}</p>;
 }
 
 /** Consistent section header: small label, title, optional subtitle and "view all" link. */
@@ -73,9 +73,9 @@ export function SectionHeading({ eyebrow, title, subtitle, action, align = 'left
   return (
     <div className={cn('mb-8 flex flex-col gap-3 sm:mb-10', align === 'center' ? 'items-center text-center' : 'sm:flex-row sm:items-end sm:justify-between', className)}>
       <div className={cn('max-w-2xl', align === 'center' && 'mx-auto')}>
-        {eyebrow && <Eyebrow className="mb-2">{eyebrow}</Eyebrow>}
-        {title && <h2 className="font-heading text-[1.75rem] font-semibold leading-tight tracking-tight text-balance sm:text-4xl">{title}</h2>}
-        {subtitle && <p className="mt-3 text-base text-muted-foreground text-pretty">{subtitle}</p>}
+        {eyebrow && <Eyebrow className="mb-2" field="eyebrow">{eyebrow}</Eyebrow>}
+        {title && <h2 data-field="title" className="font-heading text-[1.75rem] font-semibold leading-tight tracking-tight text-balance sm:text-4xl">{title}</h2>}
+        {subtitle && <p data-field="subtitle" className="mt-3 text-base text-muted-foreground text-pretty">{subtitle}</p>}
       </div>
       {action}
     </div>

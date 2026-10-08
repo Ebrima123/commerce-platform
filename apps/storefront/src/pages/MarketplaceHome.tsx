@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Package, SearchX } from 'lucide-react';
 import { INDUSTRIES, type ListItem, type Product, type Section } from '@cp/shared';
@@ -7,10 +7,12 @@ import { useStore, useStoreProducts } from '../store';
 import { container, Img, ThemeButton, useStoreHref, useWhatsAppLink, WhatsAppIcon } from '../components/primitives';
 import { MarketCard } from '../components/marketplace/MarketCard';
 import { FEATURE_ICON_COMPONENTS } from '../sections/icons';
+import { SectionRender } from '../sections/Sections';
+import { SectionFrame } from '../sections/EditorFrame';
 
 const s = (v: unknown) => (typeof v === 'string' ? v : '');
 
-interface Slide { image: string; title: string; text: string; button: string; link: string }
+interface Slide { id: string; image: string; title: string; text: string; textKey: string; button: string; link: string }
 
 /** Banner carousel: swipe on phones, arrows on desktop, auto-advance. */
 function BannerCarousel({ slides }: { slides: Slide[] }) {
@@ -34,12 +36,12 @@ function BannerCarousel({ slides }: { slides: Slide[] }) {
       <div ref={ref} onScroll={e => setIndex(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
         className="flex snap-x snap-mandatory overflow-x-auto rounded-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {slides.map((sl, i) => (
-          <div key={i} className="relative aspect-[16/9] w-full shrink-0 snap-center overflow-hidden sm:aspect-[21/8]">
+          <div key={sl.id} data-edit-id={sl.id} className="relative aspect-[16/9] w-full shrink-0 snap-center overflow-hidden sm:aspect-[21/8]">
             <Img src={sl.image} alt="" eager={i === 0} />
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
             <div className="absolute inset-y-0 left-0 flex max-w-[78%] flex-col justify-center p-5 text-white sm:max-w-[55%] sm:p-10">
-              <p className="font-heading text-xl font-bold leading-tight sm:text-4xl">{sl.title}</p>
-              {sl.text && <p className="mt-1.5 line-clamp-2 text-[13px] text-white/85 sm:mt-3 sm:text-base">{sl.text}</p>}
+              <p data-field="heading" className="font-heading text-xl font-bold leading-tight sm:text-4xl">{sl.title}</p>
+              {sl.text && <p data-field={sl.textKey} data-multiline="true" className="mt-1.5 line-clamp-2 text-[13px] text-white/85 sm:mt-3 sm:text-base">{sl.text}</p>}
               {sl.button && <div className="mt-3 sm:mt-6"><ThemeButton href={sl.link} variant="light" className="h-9 px-4 text-sm sm:h-11 sm:px-6">{sl.button}</ThemeButton></div>}
             </div>
           </div>
@@ -75,6 +77,12 @@ export function useStoreCategories(products: Product[]) {
   }, [store?.theme.sections, products]);
 }
 
+/**
+ * Marketplace home (SHEIN / Temu / Alfudi-like). The page follows the theme's
+ * sections in order — banners, trust chips, category circles and the product
+ * grid get the marketplace look; any other section renders as usual — so the
+ * merchant can rearrange everything in the editor.
+ */
 export default function MarketplaceHome() {
   const { store, preview } = useStore();
   const { data: realProducts = [], isLoading } = useStoreProducts();
@@ -99,22 +107,8 @@ export default function MarketplaceHome() {
 
   if (!store) return null;
   const sections = store.theme.sections.filter(x => !x.hidden);
-  const find = (t: Section['type']) => sections.find(x => x.type === t);
-
-  const slides: Slide[] = sections
-    .filter(x => x.type === 'hero' || x.type === 'image_text')
-    .map(x => ({
-      image: s(x.settings.imageUrl) || store.bannerUrl,
-      title: s(x.settings.heading),
-      text: s(x.settings.subheading) || s(x.settings.body),
-      button: s(x.settings.buttonText),
-      link: s(x.settings.buttonLink) || '#products',
-    }))
-    .filter(sl => sl.image && sl.title);
-
-  const trust = (find('features')?.settings.items as ListItem[] | undefined) ?? [];
-  const grid = find('featured_products');
-  const gridTitle = s(grid?.settings.title) || 'Just for you';
+  const gridSection = sections.find(x => x.type === 'featured_products');
+  const gridTitle = s(gridSection?.settings.title) || 'Just for you';
 
   const topPicks = [...products]
     .filter(p => p.in_stock)
@@ -131,58 +125,48 @@ export default function MarketplaceHome() {
   };
   const browsing = !!q || !!category;
 
-  return (
-    <div className={cn(container, 'space-y-5 py-4 sm:space-y-8 sm:py-6')}>
-      {!browsing && <BannerCarousel slides={slides} />}
-
-      {!browsing && trust.length > 0 && (
-        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {trust.slice(0, 4).map((t, i) => {
-            const Icon = FEATURE_ICON_COMPONENTS[t.icon] ?? FEATURE_ICON_COMPONENTS.star;
+  // ── Marketplace building blocks ──
+  const categoryStrip = categories.length > 0 && (
+    <div className={container}>
+      <section aria-label="Categories" className="rounded-xl bg-card p-3 sm:p-5">
+        <div className="flex gap-4 overflow-x-auto pb-1 [scrollbar-width:none] sm:gap-6 [&::-webkit-scrollbar]:hidden">
+          {[{ name: 'All', image: '' }, ...categories].map(c => {
+            const active = (c.name === 'All' && !category) || c.name === category;
             return (
-              <span key={i} className="flex shrink-0 items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                <Icon className="h-3.5 w-3.5 text-brand" /> {t.title}
-              </span>
+              <button key={c.name} type="button" onClick={() => setCategory(c.name === 'All' ? '' : c.name)}
+                className="flex w-[68px] shrink-0 flex-col items-center gap-1.5 sm:w-20">
+                <span className={cn('flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-full bg-muted ring-2 ring-offset-2 ring-offset-card transition sm:h-[72px] sm:w-[72px]',
+                  active ? 'ring-brand' : 'ring-transparent')}>
+                  {c.image ? <Img src={c.image} alt="" /> : <Package className="h-6 w-6 text-brand" />}
+                </span>
+                <span className={cn('line-clamp-2 text-center text-[11px] leading-tight sm:text-xs', active ? 'font-semibold text-brand' : 'text-foreground')}>{c.name}</span>
+              </button>
             );
           })}
         </div>
-      )}
+      </section>
+    </div>
+  );
 
-      {categories.length > 0 && (
-        <section aria-label="Categories" className="rounded-xl bg-card p-3 sm:p-5">
-          <div className="flex gap-4 overflow-x-auto pb-1 [scrollbar-width:none] sm:gap-6 [&::-webkit-scrollbar]:hidden">
-            {[{ name: 'All', image: '' }, ...categories].map(c => {
-              const active = (c.name === 'All' && !category) || c.name === category;
-              return (
-                <button key={c.name} type="button" onClick={() => setCategory(c.name === 'All' ? '' : c.name)}
-                  className="flex w-[68px] shrink-0 flex-col items-center gap-1.5 sm:w-20">
-                  <span className={cn('flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-full bg-muted ring-2 ring-offset-2 ring-offset-card transition sm:h-[72px] sm:w-[72px]',
-                    active ? 'ring-brand' : 'ring-transparent')}>
-                    {c.image ? <Img src={c.image} alt="" /> : <Package className="h-6 w-6 text-brand" />}
-                  </span>
-                  <span className={cn('line-clamp-2 text-center text-[11px] leading-tight sm:text-xs', active ? 'font-semibold text-brand' : 'text-foreground')}>{c.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
+  const picks = !browsing && topPicks.length >= 3 && (
+    <div className={container}>
+      <section aria-label="Top picks" className="rounded-xl bg-card p-3 sm:p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-heading text-base font-bold sm:text-lg">Top picks</h2>
+          <button type="button" onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })} className="text-xs font-medium text-brand">See all</button>
+        </div>
+        <div className="-mx-3 flex gap-2.5 overflow-x-auto px-3 pb-1 [scrollbar-width:none] sm:-mx-5 sm:px-5 [&::-webkit-scrollbar]:hidden">
+          {topPicks.map(p => <div key={p.id} className="w-[136px] shrink-0 sm:w-[170px]"><MarketCard product={p} compact sample={showingSamples} /></div>)}
+        </div>
+      </section>
+    </div>
+  );
 
-      {!browsing && topPicks.length >= 3 && (
-        <section aria-label="Top picks" className="rounded-xl bg-card p-3 sm:p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-heading text-base font-bold sm:text-lg">Top picks</h2>
-            <button type="button" onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })} className="text-xs font-medium text-brand">See all</button>
-          </div>
-          <div className="-mx-3 flex gap-2.5 overflow-x-auto px-3 pb-1 [scrollbar-width:none] sm:-mx-5 sm:px-5 [&::-webkit-scrollbar]:hidden">
-            {topPicks.map(p => <div key={p.id} className="w-[136px] shrink-0 sm:w-[170px]"><MarketCard product={p} compact sample={showingSamples} /></div>)}
-          </div>
-        </section>
-      )}
-
+  const grid = (
+    <div className={container}>
       <section id="products" aria-label={gridTitle} className="scroll-mt-20">
         <div className="mb-3 flex items-end justify-between gap-3">
-          <h2 className="font-heading text-lg font-bold sm:text-2xl">
+          <h2 data-field={browsing ? undefined : 'title'} className="font-heading text-lg font-bold sm:text-2xl">
             {q ? `Results for “${params.get('q')}”` : category || gridTitle}
           </h2>
           {browsing && <button type="button" onClick={() => navigate(href('/'))} className="shrink-0 text-sm font-medium text-brand">Clear</button>}
@@ -219,4 +203,83 @@ export default function MarketplaceHome() {
       </section>
     </div>
   );
+
+  const page = 'space-y-5 py-4 sm:space-y-8 sm:py-6';
+
+  // Searching or filtering: just the categories and the results.
+  if (browsing) return <div className={page}>{categoryStrip}{grid}</div>;
+
+  const blocks: ReactNode[] = [];
+  let hasCategories = false;
+  let hasGrid = false;
+
+  for (let i = 0; i < sections.length; i++) {
+    const sec = sections[i];
+    if (sec.type === 'announcement') continue; // drawn by the shell
+
+    if (sec.type === 'hero' || sec.type === 'image_text') {
+      // Consecutive banners become one swipeable carousel.
+      const run: Section[] = [sec];
+      while (sections[i + 1] && (sections[i + 1].type === 'hero' || sections[i + 1].type === 'image_text')) run.push(sections[++i]);
+      const slides = run.map(x => ({
+        id: x.id,
+        image: s(x.settings.imageUrl) || store.bannerUrl,
+        title: s(x.settings.heading),
+        text: s(x.settings.subheading) || s(x.settings.body),
+        textKey: x.type === 'hero' ? 'subheading' : 'body',
+        button: s(x.settings.buttonText),
+        link: s(x.settings.buttonLink) || '#products',
+      })).filter(sl => sl.image && sl.title);
+      if (!slides.length) continue;
+      blocks.push(
+        <SectionFrame key={sec.id} section={sec} label={run.length > 1 ? `Banners (${run.length})` : 'Banner'}>
+          <div className={container}><BannerCarousel slides={slides} /></div>
+        </SectionFrame>,
+      );
+      continue;
+    }
+
+    if (sec.type === 'features') {
+      const trust = (sec.settings.items as ListItem[] | undefined) ?? [];
+      if (!trust.length) continue;
+      blocks.push(
+        <SectionFrame key={sec.id} section={sec} label="Trust badges">
+          <div className={cn(container, 'flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden')}>
+            {trust.slice(0, 4).map((t, n) => {
+              const Icon = FEATURE_ICON_COMPONENTS[t.icon] ?? FEATURE_ICON_COMPONENTS.star;
+              return (
+                <span key={n} className="flex shrink-0 items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                  <Icon className="h-3.5 w-3.5 text-brand" /> {t.title}
+                </span>
+              );
+            })}
+          </div>
+        </SectionFrame>,
+      );
+      continue;
+    }
+
+    if (sec.type === 'categories') {
+      if (hasCategories || !categoryStrip) continue;
+      hasCategories = true;
+      blocks.push(<SectionFrame key={sec.id} section={sec} label="Category circles">{categoryStrip}</SectionFrame>);
+      continue;
+    }
+
+    if (sec.type === 'featured_products') {
+      if (hasGrid) continue;
+      hasGrid = true;
+      blocks.push(<SectionFrame key={sec.id} section={sec} label="Products"><div className="space-y-5 sm:space-y-8">{picks}{grid}</div></SectionFrame>);
+      continue;
+    }
+
+    blocks.push(<SectionFrame key={sec.id} section={sec}><SectionRender section={sec} /></SectionFrame>);
+  }
+
+  // Category circles and the product grid are what a marketplace is for, so
+  // they always appear (after the first banner / at the end) if not placed.
+  if (!hasCategories && categoryStrip) blocks.splice(Math.min(1, blocks.length), 0, <div key="auto-categories">{categoryStrip}</div>);
+  if (!hasGrid) blocks.push(<div key="auto-grid" className="space-y-5 sm:space-y-8">{picks}{grid}</div>);
+
+  return <div className={page}>{blocks}</div>;
 }

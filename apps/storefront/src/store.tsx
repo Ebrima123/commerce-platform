@@ -67,6 +67,8 @@ interface StoreState {
   /** Section currently selected in the editor (preview only). */
   highlightId: string | null;
   selectSection: (id: string) => void;
+  /** Send a message to the editor (preview only; no-op on the live store). */
+  postToEditor: (msg: PreviewMessage) => void;
 }
 
 const StoreContext = createContext<StoreState | null>(null);
@@ -109,12 +111,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [data]);
 
   const store = data && draft ? { ...data, theme: draft } : data;
-  const selectSection = (id: string) => {
-    if (preview) window.parent.postMessage({ type: 'cp:select', id } satisfies PreviewMessage, ADMIN_ORIGIN);
-  };
+  const postToEditor = (msg: PreviewMessage) => { if (preview) window.parent.postMessage(msg, ADMIN_ORIGIN); };
+  const selectSection = (id: string) => postToEditor({ type: 'cp:select', id });
 
   return (
-    <StoreContext.Provider value={{ slug, basePath, store, isLoading: !!slug && isLoading, isError, preview, highlightId, selectSection }}>
+    <StoreContext.Provider value={{ slug, basePath, store, isLoading: !!slug && isLoading, isError, preview, highlightId, selectSection, postToEditor }}>
       {children}
     </StoreContext.Provider>
   );

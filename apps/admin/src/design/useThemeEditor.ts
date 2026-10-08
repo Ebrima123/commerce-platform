@@ -85,6 +85,17 @@ export function useThemeEditor(initial: Theme) {
         return { ...t, sections };
       }),
 
+      /** Insert a new section at a position (0 = top of the page). */
+      insertAt: (type: SectionType, index: number): Section => {
+        const section = createSection(type);
+        commit(mapSections(ss => {
+          const next = [...ss];
+          next.splice(Math.max(0, Math.min(index, ss.length)), 0, section);
+          return next;
+        }));
+        return section;
+      },
+
       add: (type: SectionType, afterId?: string | null): Section => {
         const section = createSection(type);
         commit(mapSections(ss => {

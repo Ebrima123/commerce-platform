@@ -38,3 +38,7 @@
     .hero-zoom, .toast-in, .animate-page { animation: none; }
   }
 }
+
+/* Editor preview: text being edited in place. */
+.cp-inline-editing { outline: 2px dashed #2563eb; outline-offset: 4px; border-radius: 4px; cursor: text; caret-color: #2563eb; }
+.cp-inline-editing:focus { outline-style: solid; }

@@ -547,8 +547,54 @@ export function slugify(name: string): string {
 
 // ─── Editor ⇄ storefront preview messages ─────────────────────────────────────
 
+export type SectionAction = 'up' | 'down' | 'duplicate' | 'hide' | 'delete';
+
 export type PreviewMessage =
   | { type: 'cp:ready' }
   | { type: 'cp:theme'; theme: Theme }
   | { type: 'cp:select'; id: string }
-  | { type: 'cp:highlight'; id: string | null };
+  | { type: 'cp:highlight'; id: string | null }
+  // From the canvas (Elementor-style editing in the preview):
+  | { type: 'cp:action'; id: string; action: SectionAction }
+  /** "+" between sections: open the element picker to insert at this index. */
+  | { type: 'cp:add'; index: number }
+  /** An element dragged from the editor panel and dropped on the canvas. */
+  | { type: 'cp:drop'; sectionType: SectionType; index: number }
+  /** Text edited in place on the canvas. */
+  | { type: 'cp:edit'; id: string; key: string; value: string };
+
+/** Drag payload prefix for elements dragged from the editor onto the canvas. */
+export const DRAG_PREFIX = 'cp-section:';
+
+// ─── Per-section style & visibility (the editor's Style / Advanced tabs) ─────
+// Stored alongside the section's own settings under "_" keys, so older themes
+// and section renderers are unaffected.
+
+export type SpacingKey = '' | 's' | 'm' | 'l';
+export const SPACING: Record<Exclude<SpacingKey, ''>, { label: string; value: string }> = {
+  s: { label: 'Small', value: '1rem' },
+  m: { label: 'Medium', value: '2.5rem' },
+  l: { label: 'Large', value: '5rem' },
+};
+
+export interface SectionStyle {
+  background: string;     // "#rrggbb" or ""
+  marginTop: SpacingKey;
+  marginBottom: SpacingKey;
+  hideMobile: boolean;
+  hideDesktop: boolean;
+  anchor: string;         // id for "#anchor" links
+}
+
+export function sectionStyle(settings: Section['settings']): SectionStyle {
+  const s = (k: string) => (typeof settings[k] === 'string' ? (settings[k] as string) : '');
+  const space = (k: string): SpacingKey => (['s', 'm', 'l'].includes(s(k)) ? (s(k) as SpacingKey) : '');
+  return {
+    background: /^#[0-9a-f]{6}$/i.test(s('_bg')) ? s('_bg') : '',
+    marginTop: space('_mt'),
+    marginBottom: space('_mb'),
+    hideMobile: settings._hideMobile === true,
+    hideDesktop: settings._hideDesktop === true,
+    anchor: s('_anchor').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40),
+  };
+}

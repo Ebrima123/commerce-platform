@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Package, Quote, Search, X } from 'lucide-react';
 import { INDUSTRIES, type ListItem, type Product, type Section, type SettingValue } from '@cp/shared';
@@ -10,6 +10,7 @@ import {
   useResolveHref, useWhatsAppLink,
 } from '../components/primitives';
 import { FEATURE_ICON_COMPONENTS } from './icons';
+import { SectionFrame } from './EditorFrame';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ function Announcement({ s }: { s: Section['settings'] }) {
   const href = useResolveHref()(s.link);
   const text = str(s.text);
   if (!text) return null;
-  const inner = <p className="px-4 py-2.5 text-center text-[12px] font-medium tracking-wide sm:text-[13px]">{text}</p>;
+  const inner = <p data-field="text" className="px-4 py-2.5 text-center text-[12px] font-medium tracking-wide sm:text-[13px]">{text}</p>;
   return (
     <div className="bg-brand text-brand-foreground">
       {!href ? inner
@@ -65,12 +66,12 @@ function Hero({ s }: { s: Section['settings'] }) {
 
   const text = (light: boolean, center = false) => (
     <div className={cn(center && 'mx-auto flex max-w-3xl flex-col items-center text-center')}>
-      {eyebrow && <Eyebrow className={cn('mb-4', light && 'text-white/80')}>{eyebrow}</Eyebrow>}
-      <h1 className={cn('font-heading text-[2.6rem] font-semibold leading-[1.04] tracking-tight text-balance sm:text-6xl lg:text-7xl', light && 'text-white')}>
+      {eyebrow && <Eyebrow field="eyebrow" className={cn('mb-4', light && 'text-white/80')}>{eyebrow}</Eyebrow>}
+      <h1 data-field="heading" className={cn('font-heading text-[2.6rem] font-semibold leading-[1.04] tracking-tight text-balance sm:text-6xl lg:text-7xl', light && 'text-white')}>
         {str(s.heading)}
       </h1>
       {str(s.subheading) && (
-        <p className={cn('mt-5 max-w-xl text-[17px] leading-relaxed text-pretty sm:text-lg', light ? 'text-white/85' : 'text-muted-foreground', center && 'mx-auto')}>
+        <p data-field="subheading" data-multiline="true" className={cn('mt-5 max-w-xl text-[17px] leading-relaxed text-pretty sm:text-lg', light ? 'text-white/85' : 'text-muted-foreground', center && 'mx-auto')}>
           {str(s.subheading)}
         </p>
       )}
@@ -320,9 +321,9 @@ function ImageText({ s }: { s: Section['settings'] }) {
           <div className="aspect-[4/5] overflow-hidden rounded-[var(--card-radius)] sm:aspect-[5/4] md:aspect-[4/5]"><Img src={str(s.imageUrl)} alt="" /></div>
         </div>
         <div className={cn(right && 'md:order-1')}>
-          {str(s.eyebrow) && <Eyebrow className="mb-3">{str(s.eyebrow)}</Eyebrow>}
-          <h2 className="font-heading text-[1.75rem] font-semibold leading-tight tracking-tight text-balance sm:text-4xl">{str(s.heading)}</h2>
-          <p className="mt-5 whitespace-pre-line text-[17px] leading-relaxed text-muted-foreground text-pretty">{str(s.body)}</p>
+          {str(s.eyebrow) && <Eyebrow field="eyebrow" className="mb-3">{str(s.eyebrow)}</Eyebrow>}
+          <h2 data-field="heading" className="font-heading text-[1.75rem] font-semibold leading-tight tracking-tight text-balance sm:text-4xl">{str(s.heading)}</h2>
+          <p data-field="body" data-multiline="true" className="mt-5 whitespace-pre-line text-[17px] leading-relaxed text-muted-foreground text-pretty">{str(s.body)}</p>
           {str(s.buttonText) && (
             <div className="mt-8">
               <ThemeButton href={str(s.buttonLink)} variant="outline">
@@ -388,8 +389,8 @@ function RichText({ s }: { s: Section['settings'] }) {
   return (
     <section className={cn(container, sectionY)}>
       <Reveal className={cn('max-w-2xl', center && 'mx-auto text-center')}>
-        {str(s.heading) && <h2 className="font-heading text-[1.75rem] font-semibold leading-tight tracking-tight text-balance sm:text-4xl">{str(s.heading)}</h2>}
-        {str(s.body) && <p className="mt-5 whitespace-pre-line text-[17px] leading-relaxed text-muted-foreground text-pretty">{str(s.body)}</p>}
+        {str(s.heading) && <h2 data-field="heading" className="font-heading text-[1.75rem] font-semibold leading-tight tracking-tight text-balance sm:text-4xl">{str(s.heading)}</h2>}
+        {str(s.body) && <p data-field="body" data-multiline="true" className="mt-5 whitespace-pre-line text-[17px] leading-relaxed text-muted-foreground text-pretty">{str(s.body)}</p>}
       </Reveal>
     </section>
   );
@@ -408,8 +409,8 @@ function WhatsAppCta({ s }: { s: Section['settings'] }) {
           <div className="pointer-events-none absolute -bottom-24 right-24 h-56 w-56 rounded-full bg-white/5" aria-hidden />
           <div className="relative flex flex-col items-start gap-8 md:flex-row md:items-center md:justify-between">
             <div className="max-w-xl">
-              <h2 className="font-heading text-[1.75rem] font-semibold leading-tight tracking-tight text-balance sm:text-4xl">{str(s.heading)}</h2>
-              {str(s.text) && <p className="mt-3 text-[17px] leading-relaxed opacity-90 text-pretty">{str(s.text)}</p>}
+              <h2 data-field="heading" className="font-heading text-[1.75rem] font-semibold leading-tight tracking-tight text-balance sm:text-4xl">{str(s.heading)}</h2>
+              {str(s.text) && <p data-field="text" data-multiline="true" className="mt-3 text-[17px] leading-relaxed opacity-90 text-pretty">{str(s.text)}</p>}
             </div>
             {wa ? (
               <a href={wa} target="_blank" rel="noopener noreferrer"
@@ -434,8 +435,14 @@ const RENDERERS: Record<Section['type'], (p: { s: Section['settings'] }) => Reac
 
 // ─── Page renderer (+ editor selection in preview) ────────────────────────────
 
+/** Draws one section (no frame). */
+export function SectionRender({ section }: { section: Section }) {
+  const Render = RENDERERS[section.type];
+  return Render ? <Render s={section.settings} /> : null;
+}
+
 export function SectionList({ sections }: { sections: Section[] }) {
-  const { preview, highlightId, selectSection } = useStore();
+  const { preview, highlightId } = useStore();
 
   useEffect(() => {
     if (!preview || !highlightId) return;
@@ -444,25 +451,9 @@ export function SectionList({ sections }: { sections: Section[] }) {
 
   return (
     <>
-      {sections.filter(s => !s.hidden).map(section => {
-        const Render = RENDERERS[section.type];
-        if (!Render) return null;
-        if (!preview) return <Render key={section.id} s={section.settings} />;
-
-        const onClickCapture = (e: MouseEvent) => {
-          // In the editor, clicks select the section instead of navigating.
-          e.preventDefault();
-          e.stopPropagation();
-          selectSection(section.id);
-        };
-        return (
-          <div key={section.id} data-section-id={section.id} onClickCapture={onClickCapture}
-            className={cn('relative cursor-pointer outline-offset-[-2px] transition-[outline-color]',
-              highlightId === section.id ? 'outline outline-2 outline-blue-500' : 'hover:outline hover:outline-2 hover:outline-blue-500/40')}>
-            <Render s={section.settings} />
-          </div>
-        );
-      })}
+      {sections.filter(s => !s.hidden && RENDERERS[s.type]).map(section => (
+        <SectionFrame key={section.id} section={section}><SectionRender section={section} /></SectionFrame>
+      ))}
     </>
   );
 }

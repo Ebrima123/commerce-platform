@@ -13,6 +13,7 @@ import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
 import { ComingSoonPage, StoreNotFoundPage } from './pages/StatusPages';
 import LandingPage from './pages/LandingPage';
+import { CanvasDropZone } from './sections/EditorFrame';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1, refetchOnWindowFocus: false } },
@@ -47,6 +48,7 @@ function Storefront() {
               </Route>
             </Routes>
           </BrowserRouter>
+          {preview && <CanvasDropZone />}
         </CartProvider>
       )}
     </ThemeRoot>
