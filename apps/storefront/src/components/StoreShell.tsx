@@ -145,7 +145,7 @@ export function StoreShell() {
               <li className="flex items-start gap-2.5"><Truck className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />Delivery arranged on WhatsApp</li>
               <li className="flex items-start gap-2.5"><Wallet className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="flex flex-wrap gap-1.5">
-                  <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium">Wave</span>
+                  <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium">Mobile money</span>
                   <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium">Cash on delivery</span>
                 </span>
               </li>

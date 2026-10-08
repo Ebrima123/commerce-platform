@@ -67,7 +67,7 @@ export default function CartPage() {
             <span>Total</span>
             <span className="font-bold tabular-nums">{fmtDalasi(subtotal)}</span>
           </div>
-          <p className="mt-1 text-[13px] text-muted-foreground">Delivery and payment (Wave or cash) are arranged with {store?.name} on WhatsApp.</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">Delivery and payment are arranged with {store?.name} on WhatsApp.</p>
           {wa ? (
             <Button asChild size="lg" className="mt-4 hidden w-full bg-[#25D366] text-white hover:bg-[#1fb857] md:flex">
               <a href={orderUrl} target="_blank" rel="noopener noreferrer"><WhatsAppIcon className="h-5 w-5" /> Order on WhatsApp</a>

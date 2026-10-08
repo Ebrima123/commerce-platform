@@ -17,10 +17,10 @@ function ComingSoon({ title, description, icon, detail }: { title: string; descr
 
 export const DomainsPage = () => (
   <ComingSoon title="Domains" description="Where customers find your store." icon={<Globe className="h-6 w-6" />}
-    detail="Your store already has its own link. Connecting your own domain (e.g. mystore.gm) arrives in a later release." />
+    detail="Your store already has its own link. Connecting your own domain (e.g. mystore.com) arrives in a later release." />
 );
 
 export const BillingPage = () => (
   <ComingSoon title="Billing" description="Your plan and invoices." icon={<CreditCard className="h-6 w-6" />}
-    detail="Monthly plans paid with Wave or ModemPay, with invoices and payment history. You'll see the price before anything is charged." />
+    detail="Monthly plans with local payment options, invoices and payment history. You'll see the price before anything is charged." />
 );

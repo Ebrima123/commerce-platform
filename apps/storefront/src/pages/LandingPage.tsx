@@ -105,7 +105,7 @@ const STEPS = [
 const FEATURES = [
   { icon: Camera, title: 'Add products from your phone', text: 'Take a photo, type a name and a price. That’s it.' },
   { icon: WhatsAppIcon, title: 'Orders come to WhatsApp', text: 'Customers tap “Order on WhatsApp” and their cart arrives in your chat.' },
-  { icon: Wallet, title: 'Wave & cash on delivery', text: 'Your customers pay the way they already do. The money comes to you.' },
+  { icon: Wallet, title: 'Get paid your way', text: 'Your customers pay you directly, the way they already do. The money comes to you.' },
   { icon: Wifi, title: 'Fast on mobile data', text: 'Built for phones and slow connections, so customers don’t give up.' },
   { icon: Paintbrush, title: 'Change anything, live', text: 'Colours, photos and words — see your changes instantly. No code.' },
   { icon: Layers, title: 'More than one shop', text: 'Sell clothes and phones? Run several stores from one account.' },
@@ -113,7 +113,7 @@ const FEATURES = [
 
 const FAQS = [
   { q: 'Do I need a computer or tech skills?', a: 'No. You can set up and run your whole store from your phone. If you can use WhatsApp, you can use Mariseh.' },
-  { q: 'How do customers pay?', a: 'Customers send their order to you on WhatsApp and pay you directly — with Wave or cash on delivery, the same way you already sell.' },
+  { q: 'How do customers pay?', a: 'Customers send their order to you on WhatsApp and pay you directly, the same way you already sell. Mariseh never touches your money.' },
   { q: 'What will my store link look like?', a: 'Something like mariseh.com/@yourshop. You can share it anywhere — WhatsApp, Facebook, Instagram, TikTok.' },
   { q: 'How much does it cost?', a: 'You can create your store and try everything first. We’ll show you the monthly price clearly before anything is charged.' },
   { q: 'Can I change the design later?', a: 'Yes, any time. Switch between the Marketplace and Boutique styles, change colours, photos and text, and see it live.' },
@@ -179,20 +179,20 @@ export default function LandingPage() {
         <div className={cn(wrap, 'grid items-center gap-12 pb-16 pt-10 lg:grid-cols-[1.1fr_1fr] lg:pb-24 lg:pt-20')}>
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-800">
-              🇬🇲 Made for Gambian businesses
+              ✨ Built for small businesses
             </p>
             <h1 className="mt-6 text-[2.6rem] font-extrabold leading-[1.05] tracking-tight text-balance sm:text-6xl lg:text-[4.2rem]">
               Your online shop, <span style={{ color: ACCENT }}>ready in 2 minutes.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-zinc-600 text-pretty">
-              Answer three easy questions and get a beautiful store with its own link. Customers order on WhatsApp and pay with Wave or cash on delivery. No tech skills needed.
+              Answer three easy questions and get a beautiful store with its own link. Customers order on WhatsApp and pay you the way they already do. No tech skills needed.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <CtaButton>Create my store <ArrowRight className="h-5 w-5" /></CtaButton>
               <a href="#styles" className="inline-flex h-12 items-center justify-center rounded-full border border-zinc-300 px-7 text-[15px] font-semibold hover:bg-zinc-50 sm:h-14 sm:px-8 sm:text-base">See example stores</a>
             </div>
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-zinc-600">
-              {['Works on any phone', 'Orders on WhatsApp', 'Wave & cash on delivery'].map(t => (
+              {['Works on any phone', 'Orders on WhatsApp', 'Ready in minutes'].map(t => (
                 <li key={t} className="flex items-center gap-1.5"><Check className="h-4 w-4" style={{ color: ACCENT }} />{t}</li>
               ))}
             </ul>
@@ -262,7 +262,7 @@ export default function LandingPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                     <div className="absolute bottom-0 p-6 text-white">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/80">Natural skin & hair care</p>
-                      <p className="mt-2 font-serif text-2xl font-semibold leading-tight sm:text-3xl">Glowing skin under the Gambian sun</p>
+                      <p className="mt-2 font-serif text-2xl font-semibold leading-tight sm:text-3xl">Glowing skin, naturally</p>
                     </div>
                   </div>
                 </div>
@@ -368,7 +368,7 @@ export default function LandingPage() {
             <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/10" />
             <div className="pointer-events-none absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-white/10" />
             <h2 className="relative mx-auto max-w-2xl text-3xl font-extrabold tracking-tight text-balance sm:text-5xl">Start selling online today</h2>
-            <p className="relative mx-auto mt-4 max-w-xl text-lg text-white/85">Open your shop in minutes and start selling to customers across The Gambia.</p>
+            <p className="relative mx-auto mt-4 max-w-xl text-lg text-white/85">Open your shop in minutes and start selling to your customers today.</p>
             <div className="relative mt-9"><CtaButton light>Create my store <ArrowRight className="h-5 w-5" /></CtaButton></div>
           </div>
         </div>

@@ -84,7 +84,7 @@ export function MarketplaceShell() {
           <ul className="space-y-2.5 text-sm">
             {store.location && <li className="flex gap-2"><MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />{store.location}</li>}
             <li className="flex gap-2"><Truck className="h-4 w-4 shrink-0 text-muted-foreground" />Delivery arranged on WhatsApp</li>
-            <li className="flex gap-2"><Wallet className="h-4 w-4 shrink-0 text-muted-foreground" />Pay with Wave or cash on delivery</li>
+            <li className="flex gap-2"><Wallet className="h-4 w-4 shrink-0 text-muted-foreground" />Pay on delivery or as agreed on WhatsApp</li>
           </ul>
           {wa && (
             <div>

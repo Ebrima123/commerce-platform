@@ -79,7 +79,7 @@ export const SECTION_DEFINITIONS: Record<SectionType, SectionDefinition> = {
     type: 'announcement', label: 'Announcement bar', icon: 'megaphone', limit: 1,
     description: 'A slim bar at the very top for offers or delivery news.',
     fields: [
-      { key: 'text', label: 'Text', type: 'text', placeholder: 'Free delivery in Banjul this week' },
+      { key: 'text', label: 'Text', type: 'text', placeholder: 'Free delivery this week' },
       { key: 'link', label: 'Link', type: 'url', placeholder: '/#products' },
     ],
     defaults: { text: 'Free delivery on orders over D 1,000', link: '' },
@@ -104,7 +104,7 @@ export const SECTION_DEFINITIONS: Record<SectionType, SectionDefinition> = {
         { value: 'sm', label: 'Small' }, { value: 'md', label: 'Medium' }, { value: 'lg', label: 'Large' },
       ] },
     ],
-    defaults: { eyebrow: '', showWhatsapp: true, heading: 'Welcome to our store', subheading: 'Quality products, delivered across The Gambia.', buttonText: 'Shop now', buttonLink: '#products', imageUrl: '', layout: 'overlay', height: 'md' },
+    defaults: { eyebrow: '', showWhatsapp: true, heading: 'Welcome to our store', subheading: 'Quality products, delivered to your door.', buttonText: 'Shop now', buttonLink: '#products', imageUrl: '', layout: 'overlay', height: 'md' },
   },
   featured_products: {
     type: 'featured_products', label: 'Product grid', icon: 'layout-grid',
@@ -162,7 +162,7 @@ export const SECTION_DEFINITIONS: Record<SectionType, SectionDefinition> = {
         newItem: { icon: 'star', title: 'New highlight', text: 'Describe it in a sentence.' } },
     ],
     defaults: { title: '', style: 'cards', items: [
-      { icon: 'truck', title: 'Fast delivery', text: 'Across the Greater Banjul Area.' },
+      { icon: 'truck', title: 'Fast delivery', text: 'Quick, reliable delivery near you.' },
       { icon: 'shield', title: 'Quality guaranteed', text: 'Every item checked before it ships.' },
       { icon: 'phone', title: 'Order on WhatsApp', text: 'Questions? Message us any time.' },
     ] },
@@ -174,10 +174,10 @@ export const SECTION_DEFINITIONS: Record<SectionType, SectionDefinition> = {
       { key: 'title', label: 'Title', type: 'text' },
       { key: 'items', label: 'Testimonials', type: 'list', itemLabel: 'Testimonial', max: 6,
         fields: [{ key: 'quote', label: 'Quote', type: 'textarea' }, { key: 'author', label: 'Name', type: 'text' }, { key: 'role', label: 'Detail', type: 'text' }],
-        newItem: { quote: 'Great service and fast delivery!', author: 'Customer', role: 'Serekunda' } },
+        newItem: { quote: 'Great service and fast delivery!', author: 'Customer', role: 'Verified customer' } },
     ],
     defaults: { title: 'What customers say', items: [
-      { quote: 'Fast delivery and exactly as pictured. Will order again!', author: 'Fatou J.', role: 'Brikama' },
+      { quote: 'Fast delivery and exactly as pictured. Will order again!', author: 'Customer name', role: 'Verified customer' },
       { quote: 'Friendly service and great prices.', author: 'Lamin C.', role: 'Bakau' },
     ] },
   },
@@ -278,8 +278,8 @@ export const INDUSTRIES: Record<IndustryKey, IndustryPreset> = {
     brand: { primaryColor: '#6b21a8', headingFont: 'playfair', font: 'dm-sans', radius: 'none', surface: 'warm' },
     colors: ['#6b21a8', '#0f3a2e', '#832729', '#c28e38'],
     sections: [
-      { type: 'announcement', settings: { text: 'New arrivals weekly • Order on WhatsApp • Pay with Wave or cash on delivery', link: '#products' } },
-      { type: 'hero', settings: { eyebrow: 'New collection', heading: 'Elegance, cut for the modern Gambian woman', subheading: 'Grand boubous, kaftans and ready-to-wear — chosen for quality, fit and the occasion.', buttonText: 'Explore new arrivals', buttonLink: '#products', layout: 'split', height: 'lg', imageUrl: img('1696962701419-6f510910e838') } },
+      { type: 'announcement', settings: { text: 'New arrivals weekly • Order on WhatsApp • Pay on delivery', link: '#products' } },
+      { type: 'hero', settings: { eyebrow: 'New collection', heading: 'Elegance, cut for the modern woman', subheading: 'Grand boubous, kaftans and ready-to-wear — chosen for quality, fit and the occasion.', buttonText: 'Explore new arrivals', buttonLink: '#products', layout: 'split', height: 'lg', imageUrl: img('1696962701419-6f510910e838') } },
       { type: 'categories', settings: { eyebrow: 'Collections', title: 'Shop by collection', items: [
         { name: 'Kaftans & boubous', imageUrl: img('1696962678565-bee84e6b9cb6', 600) },
         { name: 'Ready-to-wear', imageUrl: img('1709809081557-78f803ce93a0', 600) },
@@ -288,8 +288,8 @@ export const INDUSTRIES: Record<IndustryKey, IndustryPreset> = {
       { type: 'featured_products', settings: { eyebrow: 'Just in', title: 'Signature pieces', subtitle: 'Limited pieces — message us to check your size', limit: 8, columns: '4', imageRatio: 'portrait', showSearch: false } },
       { type: 'image_text', settings: { eyebrow: 'Tailoring', heading: 'Made to your measurements', body: 'Send your measurements on WhatsApp and we will tailor your outfit for you. Ask us about fabrics and timing.', buttonText: 'Chat about tailoring', buttonLink: 'whatsapp', imagePosition: 'right', imageUrl: img('1558769132-cb1aea458c5e', 900) } },
       { type: 'testimonials', hidden: true, settings: { title: 'Loved by our customers', items: [
-        { quote: HIDDEN_TESTIMONIALS_NOTE, author: 'Customer name', role: 'Banjul' },
-        { quote: 'Example: Fit perfectly for my sister’s wedding. Ordering on WhatsApp was easy.', author: 'Customer name', role: 'Serekunda' },
+        { quote: HIDDEN_TESTIMONIALS_NOTE, author: 'Customer name', role: 'Verified customer' },
+        { quote: 'Example: Fit perfectly for my sister’s wedding. Ordering on WhatsApp was easy.', author: 'Customer name', role: 'Verified customer' },
       ] } },
       { type: 'whatsapp_cta', settings: { heading: 'Order or ask on WhatsApp', text: 'Send a screenshot of the piece you love — we confirm your size and arrange delivery.', buttonText: 'Message us on WhatsApp' } },
     ],
@@ -306,11 +306,11 @@ export const INDUSTRIES: Record<IndustryKey, IndustryPreset> = {
     colors: ['#0284c7', '#2563eb', '#059669', '#0f172a'],
     sections: [
       { type: 'announcement', settings: { text: 'Genuine devices • Check your item before you pay on delivery', link: '#products' } },
-      { type: 'hero', settings: { eyebrow: 'Phones · Laptops · Accessories', heading: 'Genuine devices. Fair Gambian prices.', subheading: 'Smartphones, laptops and accessories — with real support after you buy.', buttonText: 'Browse devices', buttonLink: '#products', layout: 'overlay', height: 'md', imageUrl: img('1592899677977-9c10ca588bbd') } },
+      { type: 'hero', settings: { eyebrow: 'Phones · Laptops · Accessories', heading: 'Genuine devices. Fair prices.', subheading: 'Smartphones, laptops and accessories — with real support after you buy.', buttonText: 'Browse devices', buttonLink: '#products', layout: 'overlay', height: 'md', imageUrl: img('1592899677977-9c10ca588bbd') } },
       { type: 'features', settings: { title: '', style: 'strip', items: [
         { icon: 'shield', title: 'Genuine products', text: 'Original devices — ask us for the IMEI or serial before you buy.' },
-        { icon: 'truck', title: 'Fast delivery', text: 'Delivered across the Greater Banjul Area.' },
-        { icon: 'credit-card', title: 'Wave or pay on delivery', text: 'Unbox and check your device when it arrives.' },
+        { icon: 'truck', title: 'Fast delivery', text: 'Delivered quickly to your door.' },
+        { icon: 'credit-card', title: 'Pay on delivery', text: 'Unbox and check your device when it arrives.' },
       ] } },
       { type: 'featured_products', settings: { eyebrow: 'In stock now', title: 'Latest arrivals & best sellers', subtitle: 'Message us to confirm stock and colours', limit: 8, columns: '4', imageRatio: 'square', showSearch: true } },
       { type: 'whatsapp_cta', settings: { heading: 'Questions about a device?', text: 'Chat with us on WhatsApp to check specs, stock or ask for a video of the item before delivery.', buttonText: 'Message us on WhatsApp' } },
@@ -328,7 +328,7 @@ export const INDUSTRIES: Record<IndustryKey, IndustryPreset> = {
     colors: ['#be185d', '#d97706', '#9d5c43', '#4a7c59'],
     sections: [
       { type: 'announcement', settings: { text: 'Natural skin & hair care • Free routine advice on WhatsApp', link: 'whatsapp' } },
-      { type: 'hero', settings: { eyebrow: 'Natural skin & hair care', heading: 'Glowing, nourished skin under the Gambian sun', subheading: 'Shea, oils and gentle care — with ingredients you can read and trust.', buttonText: 'Find your routine', buttonLink: '#products', layout: 'center', height: 'md', imageUrl: img('1522337360788-8b13dee7a37e') } },
+      { type: 'hero', settings: { eyebrow: 'Natural skin & hair care', heading: 'Glowing, nourished skin — naturally', subheading: 'Shea, oils and gentle care — with ingredients you can read and trust.', buttonText: 'Find your routine', buttonLink: '#products', layout: 'center', height: 'md', imageUrl: img('1522337360788-8b13dee7a37e') } },
       { type: 'categories', settings: { eyebrow: 'Your routine', title: 'Shop by routine', items: [
         { name: 'Face glow', imageUrl: img('1556228720-195a672e8a03', 600) },
         { name: 'Shea body care', imageUrl: img('1601049541289-9b1b7bbbfe19', 600) },
@@ -377,7 +377,7 @@ export const INDUSTRIES: Record<IndustryKey, IndustryPreset> = {
     colors: ['#9a3412', '#365314', '#1c1917', '#78350f'],
     sections: [
       { type: 'announcement', settings: { text: 'Furniture & home essentials • Delivery and setup on request', link: 'whatsapp' } },
-      { type: 'hero', settings: { eyebrow: 'Furniture & living', heading: 'Crafted for comfortable Gambian living', subheading: 'Solid furniture, durable fabrics and home essentials built for our climate.', buttonText: 'Explore the collection', buttonLink: '#products', layout: 'overlay', height: 'lg', imageUrl: img('1618221195710-dd6b41faaea6') } },
+      { type: 'hero', settings: { eyebrow: 'Furniture & living', heading: 'Crafted for comfortable living', subheading: 'Solid furniture, durable fabrics and home essentials built to last.', buttonText: 'Explore the collection', buttonLink: '#products', layout: 'overlay', height: 'lg', imageUrl: img('1618221195710-dd6b41faaea6') } },
       { type: 'categories', settings: { eyebrow: 'Rooms', title: 'Shop by room', items: [
         { name: 'Living room', imageUrl: img('1555041469-a586c61ea9bc', 600) },
         { name: 'Dining & kitchen', imageUrl: img('1617806118233-18e1de247200', 600) },
@@ -398,11 +398,11 @@ export const INDUSTRIES: Record<IndustryKey, IndustryPreset> = {
     brand: { primaryColor: '#0f766e', headingFont: 'inter', font: 'inter', radius: 'full', surface: 'white' },
     colors: ['#0f766e', '#1d4ed8', '#b91c1c', '#4338ca'],
     sections: [
-      { type: 'announcement', settings: { text: 'Everyday essentials • Pay with Wave or cash on delivery', link: '#products' } },
+      { type: 'announcement', settings: { text: 'Everyday essentials • Order on WhatsApp • Pay on delivery', link: '#products' } },
       { type: 'hero', settings: { eyebrow: 'Everyday essentials', heading: 'Everything you need, delivered to your door', subheading: 'Great prices on home essentials, appliances and everyday goods.', buttonText: 'See today’s deals', buttonLink: '#products', layout: 'center', height: 'sm', imageUrl: img('1761370571806-886404629697') } },
       { type: 'features', settings: { title: '', style: 'strip', items: [
         { icon: 'truck', title: 'One delivery', text: 'Mix items from any category into one delivery.' },
-        { icon: 'credit-card', title: 'Flexible payment', text: 'Pay with Wave or cash on delivery.' },
+        { icon: 'credit-card', title: 'Flexible payment', text: 'Pay on delivery or by mobile money.' },
         { icon: 'phone', title: 'WhatsApp support', text: 'We confirm stock and answer questions fast.' },
       ] } },
       { type: 'categories', settings: { eyebrow: 'Browse', title: 'Top categories', items: [
