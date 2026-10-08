@@ -75,9 +75,10 @@ const StoreContext = createContext<StoreState | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   // Resolve once per page load; short links (/mystore/...) become /@mystore/...
-  const { slug, basePath } = useMemo(() => {
+  const { slug, basePath, subdomainUrl } = useMemo(() => {
     const loc = resolveStoreLocation();
-    if (loc.canonicalPath) window.history.replaceState(null, '', loc.canonicalPath + window.location.search + window.location.hash);
+    if (loc.subdomainUrl) window.location.replace(loc.subdomainUrl + window.location.hash);
+    else if (loc.canonicalPath) window.history.replaceState(null, '', loc.canonicalPath + window.location.search + window.location.hash);
     return loc;
   }, []);
   const preview = useMemo(() => new URLSearchParams(window.location.search).get('preview') === '1' && window.parent !== window, []);
@@ -113,6 +114,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const store = data && draft ? { ...data, theme: draft } : data;
   const postToEditor = (msg: PreviewMessage) => { if (preview) window.parent.postMessage(msg, ADMIN_ORIGIN); };
   const selectSection = (id: string) => postToEditor({ type: 'cp:select', id });
+
+  // Moving to the shop's own subdomain — render nothing in the meantime.
+  if (subdomainUrl) return null;
 
   return (
     <StoreContext.Provider value={{ slug, basePath, store, isLoading: !!slug && isLoading, isError, preview, highlightId, selectSection, postToEditor }}>

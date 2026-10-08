@@ -92,3 +92,22 @@ nameservers for wildcard domains). Until then, stores open at
 
 Production also needs the backend's `CORS_ALLOWED_ORIGIN_REGEXES` to allow
 `https://*.<platform-domain>` once the domain is chosen.
+
+## Store subdomains (shopname.mariseh.com)
+
+Every store can live at `shopname.mariseh.com`. The code is ready; turning it on is DNS + config:
+
+1. **Vercel nameservers for mariseh.com** — Vercel only issues certificates for wildcard
+   domains when it manages the DNS. At the registrar (Namecheap), switch mariseh.com's
+   nameservers to `ns1.vercel-dns.com` / `ns2.vercel-dns.com`, and re-create any other
+   records you use (email MX/TXT…) in Vercel → Domains → mariseh.com → DNS first.
+2. **Add the wildcard to the storefront project**: Vercel → storefront project → Settings →
+   Domains → add `*.mariseh.com` (keep `mariseh.com` and `www.mariseh.com`).
+3. **Environment variables** (Production, then redeploy both projects):
+   - storefront: `VITE_PLATFORM_DOMAIN=mariseh.com`
+   - admin: `VITE_PLATFORM_DOMAIN=mariseh.com`
+4. The backend already allows `https://*.mariseh.com` via CORS (estore/settings.py).
+
+Once on: shops open at `shopname.mariseh.com`, the admin shares those links, and old
+`mariseh.com/@shopname` links redirect there (path and query kept). Reserved names
+(www, app, admin, api, …) can't be store addresses.

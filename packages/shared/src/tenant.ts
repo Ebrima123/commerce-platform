@@ -19,6 +19,12 @@ export interface StoreLocation {
   basePath: string;
   /** Set when the URL is the short form (/mystore/...) and should become /@mystore/... */
   canonicalPath?: string;
+  /**
+   * With store subdomains on (VITE_PLATFORM_DOMAIN), a path-based visit on the
+   * main domain (mariseh.com/@shop/...) belongs on shop.mariseh.com/... — this is
+   * that full URL; the caller redirects.
+   */
+  subdomainUrl?: string;
 }
 
 const sanitize = (s: string) => s.trim().toLowerCase().replace(/^@/, '').replace(/[^a-z0-9_-]/g, '') || null;
@@ -40,6 +46,14 @@ export function resolveStoreLocation(location: Pick<Location, 'hostname' | 'path
 
   const slug = sanitize(segment);
   if (!slug) return { slug: null, basePath: '' };
+
+  // Subdomains on and we're on the main domain: send the visitor to the shop's own address.
+  const onMainDomain = !!platformDomain && (host === platformDomain || host === `www.${platformDomain}`);
+  if (onMainDomain && /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(slug)) {
+    const path = rest.length ? `/${rest.join('/')}` : '/';
+    return { slug, basePath: '', subdomainUrl: `https://${slug}.${platformDomain}${path}${location.search}` };
+  }
+
   const basePath = `/@${slug}`;
   const isCanonical = segment.startsWith('@') && segment.slice(1) === slug;
   return {

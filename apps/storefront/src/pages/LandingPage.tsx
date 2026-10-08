@@ -14,6 +14,9 @@ import { Img, Reveal, WhatsAppIcon } from '../components/primitives';
 // Look: bold black-and-white with the Mariseh green as the accent.
 
 const START = `${ADMIN_ORIGIN}/start`;
+// Example store addresses: shopname.mariseh.com once store subdomains are on, else mariseh.com/@shopname.
+const PLATFORM_DOMAIN = (import.meta.env.VITE_PLATFORM_DOMAIN as string | undefined)?.trim();
+const storeLink = (name: string) => (PLATFORM_DOMAIN ? `${name}.${PLATFORM_DOMAIN}` : `mariseh.com/@${name}`);
 const SIGN_IN = `${ADMIN_ORIGIN}/login`;
 const GREEN = '#1bc152';       // logo green — highlights on dark
 const wrap = 'mx-auto w-full max-w-7xl px-5 sm:px-8';
@@ -214,7 +217,7 @@ const SELLS = ['Fashion', 'Phones & gadgets', 'Beauty & care', 'Food & groceries
 const FAQS = [
   { q: 'Do I need a computer or tech skills?', a: 'No. You can set up and run your whole store from your phone. If you can use WhatsApp, you can use Mariseh.' },
   { q: 'How do customers pay?', a: 'Customers send their order to you on WhatsApp and pay you directly, the same way you already sell. Mariseh never touches your money.' },
-  { q: 'What will my store link look like?', a: 'Something like mariseh.com/@yourshop. You can share it anywhere — WhatsApp, Facebook, Instagram, TikTok.' },
+  { q: 'What will my store link look like?', a: `Something like ${storeLink('yourshop')}. You can share it anywhere — WhatsApp, Facebook, Instagram, TikTok.` },
   { q: 'How much does it cost?', a: 'You can create your store and try everything first. We’ll show you the monthly price clearly before anything is charged.' },
   { q: 'Can I change the design later?', a: 'Yes, any time. Drag in new sections, click any text to change it, switch between the Marketplace and Boutique styles — and see it live.' },
 ];
@@ -422,11 +425,11 @@ export default function LandingPage() {
             visual={<ChatMock />} />
           <Feature eyebrow="Share" title="One link. Everywhere you sell."
             text="Put your store link in your WhatsApp status, Instagram bio, TikTok and Facebook. Every visit is a chance to sell."
-            points={['mariseh.com/@yourshop', 'Looks great on every phone', 'Fast to open, even on mobile data']}
+            points={[storeLink('yourshop'), 'Looks great on every phone', 'Fast to open, even on mobile data']}
             visual={
               <div className="mx-auto max-w-sm rounded-3xl bg-white p-5 shadow-xl ring-1 ring-black/5">
                 <p className="text-[13px] font-semibold text-zinc-500">Your store link</p>
-                <div className="mt-2 flex items-center gap-2 rounded-xl bg-zinc-100 px-3 py-3 text-[15px] font-semibold"><Link2 className="h-4 w-4 text-zinc-500" /> mariseh.com/@awa</div>
+                <div className="mt-2 flex items-center gap-2 rounded-xl bg-zinc-100 px-3 py-3 text-[15px] font-semibold"><Link2 className="h-4 w-4 text-zinc-500" /> {storeLink('awa')}</div>
                 <div className="mt-4 grid grid-cols-4 gap-2 text-center text-[11px] font-medium text-zinc-600">
                   {[['WhatsApp', '#25D366'], ['Instagram', '#e1306c'], ['TikTok', '#111111'], ['Facebook', '#1877f2']].map(([n, c]) => (
                     <div key={n}><span className="mx-auto mb-1.5 flex h-11 w-11 items-center justify-center rounded-2xl text-white" style={{ background: c }}><Share2 className="h-5 w-5" /></span>{n}</div>
