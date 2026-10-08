@@ -16,7 +16,6 @@ import { Img, Reveal, WhatsAppIcon } from '../components/primitives';
 const START = `${ADMIN_ORIGIN}/start`;
 const SIGN_IN = `${ADMIN_ORIGIN}/login`;
 const GREEN = '#1bc152';       // logo green — highlights on dark
-const GREEN_DARK = '#047857';  // text-safe green on white
 const wrap = 'mx-auto w-full max-w-7xl px-5 sm:px-8';
 
 const heroImg = (key: IndustryKey, w = 600) => {
@@ -28,7 +27,7 @@ function StartButton({ children = 'Start your store', className, variant = 'dark
   return (
     <a href={START}
       className={cn('inline-flex h-12 items-center justify-center gap-2 rounded-full px-7 text-[15px] font-semibold transition-[transform,background-color] hover:-translate-y-0.5 active:scale-[0.98] sm:h-14 sm:px-8 sm:text-base',
-        variant === 'dark' && 'bg-zinc-950 text-white hover:bg-zinc-800',
+        variant === 'dark' && 'bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200',
         variant === 'light' && 'bg-white text-zinc-950 hover:bg-zinc-100',
         variant === 'green' && 'bg-[#1bc152] text-zinc-950 hover:bg-[#33d167]',
         className)}>
@@ -38,7 +37,7 @@ function StartButton({ children = 'Start your store', className, variant = 'dark
 }
 
 const Eyebrow = ({ children, dark }: { children: ReactNode; dark?: boolean }) => (
-  <p className={cn('text-sm font-semibold uppercase tracking-[0.18em]', dark ? 'text-[#1bc152]' : 'text-[#047857]')}>{children}</p>
+  <p className={cn('text-sm font-semibold uppercase tracking-[0.18em]', dark ? 'text-[#1bc152]' : 'text-[#047857] dark:text-[#1bc152]')}>{children}</p>
 );
 
 // ─── Phone mock-up of a marketplace store ─────────────────────────────────────
@@ -180,6 +179,34 @@ function DesignerMock() {
   );
 }
 
+/** Follows the visitor's light/dark setting, live (also keeps the page edge in the right colour). */
+function usePrefersDark() {
+  const query = '(prefers-color-scheme: dark)';
+  const [dark, setDark] = useState(() => typeof window !== 'undefined' && window.matchMedia?.(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia?.(query);
+    if (!mq) return;
+    const onChange = () => setDark(mq.matches);
+    // 'change' covers live switches; older Safari only has addListener. Re-check on
+    // returning to the tab too, in case a change happened while it was hidden.
+    if (mq.addEventListener) mq.addEventListener('change', onChange); else mq.addListener?.(onChange);
+    window.addEventListener('focus', onChange);
+    document.addEventListener('visibilitychange', onChange);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', onChange); else mq.removeListener?.(onChange);
+      window.removeEventListener('focus', onChange);
+      document.removeEventListener('visibilitychange', onChange);
+    };
+  }, []);
+  useEffect(() => {
+    const prev = document.body.style.background;
+    document.body.style.background = dark ? '#09090b' : '#ffffff';
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    return () => { document.body.style.background = prev; document.documentElement.style.colorScheme = ''; };
+  }, [dark]);
+  return dark;
+}
+
 // ─── Content ──────────────────────────────────────────────────────────────────
 
 const SELLS = ['Fashion', 'Phones & gadgets', 'Beauty & care', 'Food & groceries', 'Home & living', 'Shoes', 'Jewelry', 'Baby & kids', 'Bags', 'Electronics', 'Perfumes', 'Fabrics'];
@@ -200,6 +227,7 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [pastHero, setPastHero] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
+  const isDark = usePrefersDark();
 
   useEffect(() => {
     document.title = 'Mariseh — Start your online store';
@@ -221,31 +249,32 @@ export default function LandingPage() {
   const onDark = !scrolled && !menu;
 
   return (
-    <div className="min-h-screen bg-white font-sans text-zinc-950 antialiased">
+    <div className={cn(isDark && 'dark')}>
+    <div className="min-h-screen bg-white font-sans text-zinc-950 antialiased dark:bg-zinc-950 dark:text-white">
       {/* ── Header (transparent over the dark hero, white once you scroll) ── */}
       <header className={cn('fixed inset-x-0 top-0 z-40 transition-colors duration-300',
-        onDark ? 'bg-transparent text-white' : 'bg-white/95 text-zinc-950 shadow-[0_1px_0_rgba(0,0,0,0.06)] backdrop-blur-md')}>
+        onDark ? 'bg-transparent text-white' : 'bg-white/95 text-zinc-950 shadow-[0_1px_0_rgba(0,0,0,0.06)] backdrop-blur-md dark:bg-zinc-950/90 dark:text-white dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]')}>
         <div className={cn(wrap, 'flex h-16 items-center justify-between gap-4 sm:h-[72px]')}>
           <a href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
             <img src="/mariseh-logo.png" alt="" className="h-9 w-9" />
             Mariseh
           </a>
-          <nav className={cn('hidden items-center gap-8 text-[15px] font-medium md:flex', onDark ? 'text-white/80' : 'text-zinc-600')}>
-            {nav.map(([label, href]) => <a key={href} href={href} className={onDark ? 'hover:text-white' : 'hover:text-zinc-950'}>{label}</a>)}
+          <nav className={cn('hidden items-center gap-8 text-[15px] font-medium md:flex', onDark ? 'text-white/80' : 'text-zinc-600 dark:text-zinc-300')}>
+            {nav.map(([label, href]) => <a key={href} href={href} className={onDark ? 'hover:text-white' : 'hover:text-zinc-950 dark:hover:text-white'}>{label}</a>)}
           </nav>
           <div className="hidden items-center gap-5 md:flex">
-            <a href={SIGN_IN} className={cn('text-[15px] font-medium', onDark ? 'text-white/80 hover:text-white' : 'text-zinc-600 hover:text-zinc-950')}>Log in</a>
+            <a href={SIGN_IN} className={cn('text-[15px] font-medium', onDark ? 'text-white/80 hover:text-white' : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white')}>Log in</a>
             <a href={START} className={cn('inline-flex h-11 items-center rounded-full px-5 text-[15px] font-semibold transition-colors',
-              onDark ? 'bg-white text-zinc-950 hover:bg-zinc-100' : 'bg-zinc-950 text-white hover:bg-zinc-800')}>Start your store</a>
+              onDark ? 'bg-white text-zinc-950 hover:bg-zinc-100' : 'bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200')}>Start your store</a>
           </div>
           <button type="button" onClick={() => setMenu(m => !m)} aria-label="Menu" aria-expanded={menu}
-            className={cn('flex h-11 w-11 items-center justify-center rounded-full md:hidden', onDark ? 'hover:bg-white/10' : 'hover:bg-zinc-100')}>
+            className={cn('flex h-11 w-11 items-center justify-center rounded-full md:hidden', onDark ? 'hover:bg-white/10' : 'hover:bg-zinc-100 dark:hover:bg-white/10')}>
             {menu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
         {menu && (
-          <div className="border-t border-zinc-100 bg-white px-5 pb-6 text-zinc-950 md:hidden">
-            {nav.map(([label, href]) => <a key={href} href={href} onClick={() => setMenu(false)} className="block border-b border-zinc-100 py-4 text-lg font-medium">{label}</a>)}
+          <div className="border-t border-zinc-100 bg-white px-5 pb-6 text-zinc-950 dark:border-white/10 dark:bg-zinc-950 dark:text-white md:hidden">
+            {nav.map(([label, href]) => <a key={href} href={href} onClick={() => setMenu(false)} className="block border-b border-zinc-100 py-4 text-lg font-medium dark:border-white/10">{label}</a>)}
             <a href={SIGN_IN} className="block py-4 text-lg font-medium">Log in</a>
             <StartButton className="mt-2 w-full" />
           </div>
@@ -298,10 +327,10 @@ export default function LandingPage() {
       </section>
 
       {/* ── What you can sell (scrolling strip) ── */}
-      <section aria-label="What you can sell" className="overflow-hidden border-b border-zinc-100 py-6">
+      <section aria-label="What you can sell" className="overflow-hidden border-b border-zinc-100 py-6 dark:border-white/10">
         <div className="flex w-max animate-[marquee_40s_linear_infinite] gap-3 motion-reduce:animate-none">
           {[...SELLS, ...SELLS].map((s, i) => (
-            <span key={i} className="whitespace-nowrap rounded-full bg-zinc-100 px-5 py-2.5 text-[15px] font-medium text-zinc-700">{s}</span>
+            <span key={i} className="whitespace-nowrap rounded-full bg-zinc-100 px-5 py-2.5 text-[15px] font-medium text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">{s}</span>
           ))}
         </div>
       </section>
@@ -312,15 +341,15 @@ export default function LandingPage() {
           <Reveal className="max-w-3xl">
             <Eyebrow>Everything in one place</Eyebrow>
             <h2 className="mt-4 text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] text-balance sm:text-6xl">Everything you need to sell online.</h2>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-zinc-600">A beautiful store, orders straight to WhatsApp, and a simple app to run it all — from your phone.</p>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">A beautiful store, orders straight to WhatsApp, and a simple app to run it all — from your phone.</p>
           </Reveal>
 
           <div className="mt-14 grid gap-4 md:grid-cols-6">
             <Reveal className="md:col-span-4">
-              <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-zinc-100 p-7 sm:p-9">
-                <Paintbrush className="h-7 w-7" style={{ color: GREEN_DARK }} />
+              <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-zinc-100 p-7 dark:bg-zinc-900 sm:p-9">
+                <Paintbrush className="h-7 w-7 text-[#047857] dark:text-[#1bc152]" />
                 <h3 className="mt-4 text-2xl font-bold tracking-tight">Design it your way</h3>
-                <p className="mt-2 max-w-md text-zinc-600">Drag in sections, click any text to change it, pick your colours. See every change live — no code.</p>
+                <p className="mt-2 max-w-md text-zinc-600 dark:text-zinc-400">Drag in sections, click any text to change it, pick your colours. See every change live — no code.</p>
                 <div className="mt-7 h-44 sm:h-52"><DesignerMock /></div>
               </div>
             </Reveal>
@@ -338,7 +367,7 @@ export default function LandingPage() {
               </div>
             </Reveal>
             <Reveal className="md:col-span-2">
-              <div className="flex h-full flex-col rounded-3xl bg-zinc-950 p-7 text-white sm:p-9">
+              <div className="flex h-full flex-col rounded-3xl bg-zinc-950 p-7 text-white ring-1 ring-transparent dark:bg-zinc-900 dark:ring-white/10 sm:p-9">
                 <Camera className="h-7 w-7" style={{ color: GREEN }} />
                 <h3 className="mt-4 text-2xl font-bold tracking-tight">Add products in seconds</h3>
                 <p className="mt-2 text-zinc-400">Take a photo, type a name and a price. Sizes and colours when you need them.</p>
@@ -349,20 +378,20 @@ export default function LandingPage() {
               </div>
             </Reveal>
             <Reveal className="md:col-span-2" delay={80}>
-              <div className="flex h-full flex-col rounded-3xl bg-[#ecfdf3] p-7 sm:p-9">
-                <BarChart3 className="h-7 w-7" style={{ color: GREEN_DARK }} />
+              <div className="flex h-full flex-col rounded-3xl bg-[#ecfdf3] p-7 dark:bg-emerald-950/60 sm:p-9">
+                <BarChart3 className="h-7 w-7 text-[#047857] dark:text-[#1bc152]" />
                 <h3 className="mt-4 text-2xl font-bold tracking-tight">See what sells</h3>
-                <p className="mt-2 text-zinc-600">Sales, orders and best sellers at a glance — so you know what to stock next.</p>
+                <p className="mt-2 text-zinc-600 dark:text-zinc-400">Sales, orders and best sellers at a glance — so you know what to stock next.</p>
                 <div className="mt-auto flex h-16 items-end gap-1.5 pt-7">{[40, 55, 35, 70, 60, 90, 75].map((h, i) => <span key={i} className="flex-1 rounded-t-[4px] bg-[#047857]" style={{ height: `${h}%` }} />)}</div>
               </div>
             </Reveal>
             <Reveal className="md:col-span-2" delay={160}>
-              <div className="flex h-full flex-col rounded-3xl bg-zinc-100 p-7 sm:p-9">
-                <Layers className="h-7 w-7" style={{ color: GREEN_DARK }} />
+              <div className="flex h-full flex-col rounded-3xl bg-zinc-100 p-7 dark:bg-zinc-900 sm:p-9">
+                <Layers className="h-7 w-7 text-[#047857] dark:text-[#1bc152]" />
                 <h3 className="mt-4 text-2xl font-bold tracking-tight">More than one shop</h3>
-                <p className="mt-2 text-zinc-600">Sell clothes and phones? Run several stores from one account and switch in a tap.</p>
+                <p className="mt-2 text-zinc-600 dark:text-zinc-400">Sell clothes and phones? Run several stores from one account and switch in a tap.</p>
                 <div className="mt-auto flex -space-x-2 pt-7">
-                  {['#6b21a8', '#0284c7', '#be185d', '#15803d'].map(c => <span key={c} className="h-10 w-10 rounded-full ring-4 ring-zinc-100" style={{ background: c }} />)}
+                  {['#6b21a8', '#0284c7', '#be185d', '#15803d'].map(c => <span key={c} className="h-10 w-10 rounded-full ring-4 ring-zinc-100 dark:ring-zinc-900" style={{ background: c }} />)}
                 </div>
               </div>
             </Reveal>
@@ -371,7 +400,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Start / Sell / Share / Manage (alternating) ── */}
-      <section id="how" className="scroll-mt-20 bg-zinc-50 py-20 sm:py-28">
+      <section id="how" className="scroll-mt-20 bg-zinc-50 py-20 dark:bg-zinc-900/50 sm:py-28">
         <div className={cn(wrap, 'space-y-24 sm:space-y-32')}>
           <Feature eyebrow="Start" title="Your store, ready in two minutes"
             text="Type your shop name, pick what you sell and choose a look. Mariseh builds the whole store for your kind of business — photos, words and layout included."
@@ -421,16 +450,16 @@ export default function LandingPage() {
           </Reveal>
           <div className="mt-14 grid gap-5 lg:grid-cols-2">
             <Reveal>
-              <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50 to-violet-50 p-7 sm:p-10">
+              <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50 to-violet-50 dark:from-sky-950/50 dark:to-violet-950/50 p-7 sm:p-10">
                 <h3 className="text-2xl font-bold tracking-tight">Marketplace</h3>
-                <p className="mt-2 max-w-md text-zinc-600">A big search bar, category icons and lots of products on one screen. Great when you sell many items.</p>
+                <p className="mt-2 max-w-md text-zinc-600 dark:text-zinc-400">A big search bar, category icons and lots of products on one screen. Great when you sell many items.</p>
                 <div className="mt-10 flex flex-1 items-end justify-center"><PhoneMock industry="electronics" color="#0284c7" name="Coastal Phones" /></div>
               </div>
             </Reveal>
             <Reveal delay={100}>
-              <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-[#faf6ef] p-7 sm:p-10">
+              <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-[#faf6ef] p-7 dark:bg-[#1f1b16] sm:p-10">
                 <h3 className="text-2xl font-bold tracking-tight">Boutique</h3>
-                <p className="mt-2 max-w-md text-zinc-600">Big photos, elegant fonts and your story. Great for fashion, beauty and special products.</p>
+                <p className="mt-2 max-w-md text-zinc-600 dark:text-zinc-400">Big photos, elegant fonts and your story. Great for fashion, beauty and special products.</p>
                 <div className="mt-10 flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
                   <div className="relative aspect-[4/3] h-full">
                     <Img src={heroImg('beauty', 900)} alt="Example boutique store" />
@@ -479,7 +508,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Small promises ── */}
-      <section className="border-b border-zinc-100 py-16 sm:py-20">
+      <section className="border-b border-zinc-100 py-16 dark:border-white/10 sm:py-20">
         <div className={cn(wrap, 'grid gap-10 sm:grid-cols-2 lg:grid-cols-4')}>
           {[
             [Smartphone, 'Phone first', 'Set up and run everything without a computer.'],
@@ -490,9 +519,9 @@ export default function LandingPage() {
             const I = Icon as LucideIcon;
             return (
               <div key={title as string}>
-                <I className="h-7 w-7" style={{ color: GREEN_DARK }} />
+                <I className="h-7 w-7 text-[#047857] dark:text-[#1bc152]" />
                 <p className="mt-4 text-lg font-bold">{title as string}</p>
-                <p className="mt-1 leading-relaxed text-zinc-600">{text as string}</p>
+                <p className="mt-1 leading-relaxed text-zinc-600 dark:text-zinc-400">{text as string}</p>
               </div>
             );
           })}
@@ -505,9 +534,9 @@ export default function LandingPage() {
           <div>
             <Eyebrow>FAQ</Eyebrow>
             <h2 className="mt-4 text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] sm:text-5xl">Questions, answered.</h2>
-            <p className="mt-4 text-lg text-zinc-600">Anything else? Start your store and look around — it only takes a minute.</p>
+            <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">Anything else? Start your store and look around — it only takes a minute.</p>
           </div>
-          <div className="divide-y divide-zinc-200 border-y border-zinc-200">
+          <div className="divide-y divide-zinc-200 border-y border-zinc-200 dark:divide-white/10 dark:border-white/10">
             {FAQS.map((f, i) => {
               const isOpen = open === i;
               return (
@@ -521,7 +550,7 @@ export default function LandingPage() {
                   </h3>
                   <div id={`faq-a-${i}`} role="region" aria-labelledby={`faq-q-${i}`}
                     className={cn('grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none', isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
-                    <div className="overflow-hidden"><p className="pb-6 pr-8 text-[17px] leading-relaxed text-zinc-600">{f.a}</p></div>
+                    <div className="overflow-hidden"><p className="pb-6 pr-8 text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400">{f.a}</p></div>
                   </div>
                 </div>
               );
@@ -544,11 +573,11 @@ export default function LandingPage() {
 
       {/* ── Sticky mobile CTA (after the hero has scrolled away) ── */}
       <div aria-hidden={!pastHero} className={cn(
-        'fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md transition duration-300 ease-out md:hidden',
+        'fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 dark:border-white/10 dark:bg-zinc-950/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md transition duration-300 ease-out md:hidden',
         pastHero && !menu ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-full opacity-0',
       )}>
         <a href={START} tabIndex={pastHero ? undefined : -1}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-zinc-950 text-[15px] font-semibold text-white active:scale-[0.98]">
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-zinc-950 text-[15px] font-semibold text-white active:scale-[0.98] dark:bg-white dark:text-zinc-950">
           Start your store <ArrowRight className="h-5 w-5" />
         </a>
       </div>
@@ -576,6 +605,7 @@ export default function LandingPage() {
         <div className={cn(wrap, 'mt-14 border-t border-white/10 pt-6 text-sm')}>© {new Date().getFullYear()} Mariseh</div>
       </footer>
     </div>
+    </div>
   );
 }
 
@@ -588,15 +618,15 @@ function Feature({ eyebrow, title, text, points, visual, reverse }: {
       <Reveal className={cn(reverse && 'lg:order-2')}>
         <Eyebrow>{eyebrow}</Eyebrow>
         <h2 className="mt-4 text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] text-balance sm:text-5xl">{title}</h2>
-        <p className="mt-5 text-lg leading-relaxed text-zinc-600">{text}</p>
+        <p className="mt-5 text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">{text}</p>
         <ul className="mt-7 space-y-3">
           {points.map(p => (
             <li key={p} className="flex items-center gap-3 text-[17px] font-medium">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ecfdf3]"><Check className="h-4 w-4 text-[#047857]" strokeWidth={3} /></span>{p}
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ecfdf3] dark:bg-emerald-950"><Check className="h-4 w-4 text-[#047857] dark:text-[#1bc152]" strokeWidth={3} /></span>{p}
             </li>
           ))}
         </ul>
-        <a href={START} className="mt-8 inline-flex items-center gap-2 text-[17px] font-semibold text-zinc-950 underline-offset-4 hover:underline">
+        <a href={START} className="mt-8 inline-flex items-center gap-2 text-[17px] font-semibold text-zinc-950 underline-offset-4 hover:underline dark:text-white">
           Start your store <ArrowRight className="h-5 w-5" />
         </a>
       </Reveal>
