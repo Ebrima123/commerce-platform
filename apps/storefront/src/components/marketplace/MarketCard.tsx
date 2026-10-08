@@ -37,7 +37,7 @@ export function MarketCard({ product, sample = false, compact = false }: { produ
   };
 
   const body = (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg bg-card shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-shadow hover:shadow-md">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl bg-card shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-[box-shadow,transform] duration-150 hover:shadow-md group-active:scale-[0.98]">
       <div className="relative aspect-square bg-muted">
         <Img src={product.image_url} alt={product.name} className="transition-transform duration-500 group-hover:scale-[1.03]" />
         {badge && <span className={cn('absolute left-0 top-2 rounded-r-full px-2 py-0.5 text-[10px] font-bold shadow-sm', badge.cls)}>{badge.text}</span>}

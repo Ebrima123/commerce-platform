@@ -1,5 +1,9 @@
 @import '@cp/ui/base.css';
 
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
+}
+
 @layer utilities {
   /* Sections fade up gently as they scroll into view (see useReveal). */
   .reveal { opacity: 0; transform: translateY(18px); transition: opacity 700ms cubic-bezier(.2,.7,.2,1), transform 700ms cubic-bezier(.2,.7,.2,1); }
@@ -17,12 +21,20 @@
   @keyframes toast-in { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
   .toast-in { animation: toast-in 600ms cubic-bezier(.2,.8,.2,1) 900ms both; }
 
+  /* iOS-style app chrome: safe areas around the notch / home bar, pushed pages. */
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  @keyframes ios-page { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+  .animate-page { animation: ios-page 320ms cubic-bezier(.2,.8,.2,1) both; }
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
   .text-balance { text-wrap: balance; }
   .text-pretty { text-wrap: pretty; }
 
   @media (prefers-reduced-motion: reduce) {
     .reveal, .reveal.is-visible { opacity: 1; transform: none; transition: none; }
     .img-fade { opacity: 1; transition: none; }
-    .hero-zoom, .toast-in { animation: none; }
+    .hero-zoom, .toast-in, .animate-page { animation: none; }
   }
 }

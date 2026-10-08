@@ -18,7 +18,7 @@ function StorePreview({ store }: { store: PlatformStore }) {
   const hero = theme.sections.find(s => s.type === 'hero');
   const image = typeof hero?.settings.imageUrl === 'string' ? hero.settings.imageUrl.replace(/w=\d+/, 'w=600') : '';
   return (
-    <div className="relative aspect-[16/9] overflow-hidden rounded-t-xl" style={{ background: theme.brand.primaryColor }}>
+    <div className="relative aspect-[16/9] overflow-hidden" style={{ background: theme.brand.primaryColor }}>
       {image && <img src={image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 flex items-end gap-3 p-4">
@@ -60,7 +60,7 @@ function StoreCard({ store, current }: { store: PlatformStore; current: boolean 
   const rename = (e: FormEvent) => { e.preventDefault(); if (name.trim() && name.trim() !== store.name) update.mutate({ name: name.trim() }); else setRenaming(false); };
 
   return (
-    <Card className={cn('flex flex-col overflow-hidden', current && 'ring-2 ring-foreground')}>
+    <Card className={cn('flex flex-col overflow-hidden', current && 'ring-2 ring-brand')}>
       <StorePreview store={store} />
       <div className="flex flex-1 flex-col p-4">
         {renaming ? (
@@ -72,7 +72,7 @@ function StoreCard({ store, current }: { store: PlatformStore; current: boolean 
         ) : (
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="flex items-center gap-2 truncate text-base font-semibold">
+              <p className="flex items-center gap-2 truncate text-[17px] font-semibold">
                 {store.name}
                 <button type="button" onClick={() => setRenaming(true)} aria-label={`Rename ${store.name}`} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
                   <Pencil className="h-3.5 w-3.5" />
@@ -125,12 +125,13 @@ export default function StoresPage() {
       <PageHeader
         title="My stores"
         description={stores ? `You have ${stores.length} store${stores.length !== 1 ? 's' : ''}. Pick one to manage, or open a new one.` : 'All your stores in one place.'}
-        actions={!atLimit && <Button asChild><Link to="/start?new=1"><Plus /> Add a new store</Link></Button>}
+        back={{ to: '/more', label: 'More' }}
+        actions={!atLimit && <Button asChild size="sm" variant="tinted"><Link to="/start?new=1"><Plus /> New store</Link></Button>}
       />
 
       {isLoading ? (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {[0, 1, 2].map(i => <Skeleton key={i} className="h-80 rounded-xl" />)}
+          {[0, 1, 2].map(i => <Skeleton key={i} className="h-80 rounded-2xl" />)}
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -141,8 +142,8 @@ export default function StoresPage() {
             </Card>
           ) : (
             <Link to="/start?new=1"
-              className="group flex min-h-[320px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors hover:border-foreground/40 hover:bg-muted/40">
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-muted transition-transform group-hover:scale-105"><Plus className="h-6 w-6" /></span>
+              className="group flex min-h-[320px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-300 p-6 text-center transition-[colors,transform] hover:border-brand/50 hover:bg-card active:scale-[0.98]">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand/10 text-brand transition-transform group-hover:scale-105"><Plus className="h-6 w-6" /></span>
               <span className="mt-4 text-base font-semibold">Add a new store</span>
               <span className="mt-1 max-w-[220px] text-sm text-muted-foreground">Sell something different? Open another shop in a few clicks.</span>
             </Link>

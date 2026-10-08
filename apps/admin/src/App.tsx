@@ -11,6 +11,7 @@ import ProductsPage from './pages/ProductsPage';
 import OrdersPage from './pages/OrdersPage';
 import SettingsPage from './pages/SettingsPage';
 import StoresPage from './pages/StoresPage';
+import MorePage from './pages/MorePage';
 import { BillingPage, DomainsPage } from './pages/ComingSoonPages';
 
 const queryClient = new QueryClient({
@@ -35,11 +36,12 @@ export default function App() {
               <Route path="billing" element={<BillingPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="stores" element={<StoresPage />} />
+              <Route path="more" element={<MorePage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
-        <Toaster position="bottom-right" richColors closeButton />
+        <Toaster position="top-center" richColors closeButton offset={16} />
       </AuthProvider>
     </QueryClientProvider>
   );

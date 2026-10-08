@@ -6,20 +6,23 @@ import { cn } from './cn';
 // ─── Button ───────────────────────────────────────────────────────────────────
 
 export const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0',
+  // iOS-style: rounded, semibold, and a quick press-in rather than a hover colour.
+  'inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-xl text-[15px] font-semibold transition-[transform,opacity,background-color] duration-150 active:scale-[0.97] active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 ring-offset-background disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-[18px] [&_svg]:shrink-0',
   {
     variants: {
       variant: {
-        primary: 'bg-brand text-brand-foreground shadow-sm hover:bg-brand/90',
-        outline: 'border border-input bg-card hover:bg-muted',
-        ghost: 'hover:bg-muted',
+        primary: 'bg-brand text-brand-foreground hover:bg-brand/90',
+        // iOS "gray" button: filled, no border.
+        outline: 'bg-muted text-foreground hover:bg-muted/70',
+        tinted: 'bg-brand/10 text-brand hover:bg-brand/15',
+        ghost: 'text-foreground hover:bg-muted/70',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
       },
       size: {
-        sm: 'h-8 px-3',
-        md: 'h-9 px-4',
-        lg: 'h-11 px-6 text-base',
-        icon: 'h-9 w-9',
+        sm: 'h-8 rounded-lg px-3.5 text-[13px] [&_svg]:size-4',
+        md: 'h-10 px-4',
+        lg: 'h-12 rounded-[14px] px-6 text-[17px]',
+        icon: 'h-10 w-10 rounded-full',
       },
     },
     defaultVariants: { variant: 'primary', size: 'md' },
@@ -45,8 +48,9 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     <input
       ref={ref}
       className={cn(
-        'flex h-9 w-full rounded-md border border-input bg-card px-3 text-sm placeholder:text-muted-foreground',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50',
+        // 16px text stops iPhones zooming in when the field is tapped.
+        'flex h-11 w-full rounded-xl border-0 bg-muted px-3.5 text-base placeholder:text-muted-foreground',
+        'focus-visible:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 disabled:opacity-50',
         className,
       )}
       {...props}
@@ -62,7 +66,7 @@ export const Label = ({ className, ...props }: React.LabelHTMLAttributes<HTMLLab
 // ─── Surfaces ─────────────────────────────────────────────────────────────────
 
 export const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('rounded-xl border border-border/70 bg-card shadow-sm', className)} {...props} />
+  <div className={cn('rounded-2xl bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04)]', className)} {...props} />
 );
 
 export const Skeleton = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -77,7 +81,7 @@ const badgeTones = {
 } as const;
 
 export const Badge = ({ tone = 'neutral', className, ...props }: React.HTMLAttributes<HTMLSpanElement> & { tone?: keyof typeof badgeTones }) => (
-  <span className={cn('inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap', badgeTones[tone], className)} {...props} />
+  <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap', badgeTones[tone], className)} {...props} />
 );
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
@@ -87,8 +91,8 @@ export function EmptyState({ icon, title, description, action, className }: {
 }) {
   return (
     <div className={cn('flex flex-col items-center justify-center text-center px-6 py-16', className)}>
-      {icon && <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-border/70 bg-muted/50 text-muted-foreground">{icon}</div>}
-      <p className="text-sm font-semibold text-foreground">{title}</p>
+      {icon && <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">{icon}</div>}
+      <p className="text-[17px] font-semibold text-foreground">{title}</p>
       {description && <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>

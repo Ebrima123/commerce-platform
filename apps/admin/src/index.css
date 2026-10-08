@@ -1,1 +1,50 @@
 @import '@cp/ui/base.css';
+
+/* iOS look for the merchant app: grouped grey background, white cells,
+   Mariseh green as the tint colour. */
+@layer base {
+  :root {
+    --background: 240 24% 96%;
+    --foreground: 240 6% 7%;
+    --card: 0 0% 100%;
+    --muted: 240 7% 91%;
+    --muted-foreground: 240 3% 45%;
+    --border: 240 4% 84%;
+    --input: 240 5% 84%;
+    --ring: 158 86% 29%;
+    --brand: 158 86% 29%;
+    --brand-foreground: 0 0% 100%;
+    --destructive: 3 100% 59%;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+}
+
+@layer utilities {
+  /* Page pushed in, like a navigation controller. */
+  @keyframes ios-page { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+  .animate-page { animation: ios-page 320ms cubic-bezier(.2,.8,.2,1) both; }
+
+  /* Bottom sheet sliding up / dialog popping in on bigger screens. */
+  @keyframes ios-sheet { from { transform: translateY(100%); } to { transform: none; } }
+  @keyframes ios-pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+  @keyframes ios-fade { from { opacity: 0; } to { opacity: 1; } }
+  .animate-sheet { animation: ios-sheet 380ms cubic-bezier(.2,.9,.25,1) both; }
+  .animate-fade { animation: ios-fade 250ms ease-out both; }
+  .animate-pop { animation: ios-pop 220ms cubic-bezier(.2,.8,.2,1) both; }
+
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+
+  @media (prefers-reduced-motion: reduce) {
+    [class*="animate-page"], [class*="animate-sheet"], [class*="animate-fade"], [class*="animate-pop"] { animation: none !important; }
+  }
+}

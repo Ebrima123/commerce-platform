@@ -1,10 +1,11 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { MapPin, Search, ShoppingBag, Truck, Wallet } from 'lucide-react';
 import { cn } from '@cp/ui';
 import { useCart, useStore, useStoreProducts } from '../store';
 import { SectionList, showCategory } from '../sections/Sections';
 import { container, useStoreHref, useWhatsAppLink, WhatsAppIcon } from './primitives';
+import { TabBar } from './TabBar';
 
 export { useStoreHref } from './primitives';
 
@@ -27,6 +28,13 @@ export function StoreShell() {
   const onHome = pathname === '/' || pathname === '';
 
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  // Search tab (?search=1): jump to the product search once the list is there.
+  const [params, setParams] = useSearchParams();
+  useEffect(() => {
+    if (params.get('search') !== '1' || !products.length) return;
+    const t = setTimeout(() => { scrollToProducts(true); params.delete('search'); setParams(params, { replace: true }); }, 100);
+    return () => clearTimeout(t);
+  }, [params, products.length, setParams]);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
@@ -52,11 +60,11 @@ export function StoreShell() {
   const searchClick = () => { if (!scrollToProducts(true)) window.location.assign(href('/')); };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col pb-[calc(50px+env(safe-area-inset-bottom))] md:pb-0">
       <SectionList sections={announcement} />
 
-      <header className={cn('sticky top-0 z-30 border-b bg-background/90 backdrop-blur-md transition-shadow duration-300',
-        scrolled ? 'border-border/70 shadow-[0_1px_12px_rgba(0,0,0,0.06)]' : 'border-transparent')}>
+      <header className={cn('sticky top-0 z-30 bg-background/80 pt-safe backdrop-blur-xl backdrop-saturate-150 transition-shadow duration-300',
+        scrolled ? 'shadow-[0_0.5px_0_rgba(0,0,0,0.18)]' : '')}>
         <div className={cn(container, 'flex h-16 items-center justify-between gap-4 sm:h-[72px]')}>
           <Link to={href('/')} className="flex min-w-0 items-center gap-3" aria-label={`${store.name} home`}>
             {brand.logoUrl ? (
@@ -100,7 +108,7 @@ export function StoreShell() {
         </div>
       </header>
 
-      <main className="flex-1"><Outlet /></main>
+      <main key={pathname} className="animate-page flex-1"><Outlet /></main>
 
       <footer id="contact" className="mt-auto border-t border-border/70 bg-card">
         <div className={cn(container, 'grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]')}>
@@ -152,13 +160,15 @@ export function StoreShell() {
         </div>
       </footer>
 
-      {/* Floating WhatsApp button — how most customers here prefer to order. */}
+      {/* Floating WhatsApp button on wide screens; phones have Chat in the tab bar. */}
       {wa && pathname !== '/cart' && (
         <a href={wa} target="_blank" rel="noopener noreferrer" aria-label="Chat with us on WhatsApp"
-          className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_24px_rgba(37,211,102,0.45)] transition-transform hover:scale-105 active:scale-95 sm:bottom-6 sm:right-6">
+          className="fixed bottom-6 right-6 z-40 hidden h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_24px_rgba(37,211,102,0.45)] transition-transform hover:scale-105 active:scale-95 md:flex">
           <WhatsAppIcon className="h-7 w-7" />
         </a>
       )}
+
+      <TabBar storeName={store.name} variant="boutique" />
     </div>
   );
 }
