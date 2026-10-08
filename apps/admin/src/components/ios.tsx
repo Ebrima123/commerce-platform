@@ -148,3 +148,61 @@ export function FieldRow({ label, htmlFor, children, hint }: { label: string; ht
 
 /** Input styling for use inside FieldRow. */
 export const plainInput = 'mt-0.5 block h-9 w-full border-0 bg-transparent p-0 text-[17px] placeholder:text-zinc-400 focus:outline-none focus:ring-0';
+
+/** Titled white card (Shopify-style layout block). */
+export function Panel({ title, action, children, className }: { title?: ReactNode; action?: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <section className={cn('rounded-2xl bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-5', className)}>
+      {(title || action) && (
+        <div className="mb-3 flex items-center justify-between gap-3">
+          {title && <h2 className="text-[17px] font-semibold">{title}</h2>}
+          {action}
+        </div>
+      )}
+      {children}
+    </section>
+  );
+}
+
+/** Shopify's contextual save bar: appears while there are unsaved changes. */
+export function SaveBar({ show, saving, onSave, onDiscard }: { show: boolean; saving?: boolean; onSave: () => void; onDiscard: () => void }) {
+  if (!show) return null;
+  return (
+    <div className="animate-fade fixed inset-x-0 top-0 z-50 bg-zinc-900 pt-safe text-white shadow-lg">
+      <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4 lg:pl-[calc(18rem+2.5rem)]">
+        <p className="flex-1 truncate text-[15px] font-medium">Unsaved changes</p>
+        <button type="button" onClick={onDiscard} disabled={saving} className="h-9 rounded-lg px-3 text-[15px] font-medium text-zinc-200 hover:bg-white/10 disabled:opacity-50">Discard</button>
+        <button type="button" onClick={onSave} disabled={saving} className="h-9 rounded-lg bg-white px-4 text-[15px] font-semibold text-zinc-900 active:scale-[0.97] disabled:opacity-60">
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Horizontal scrolling filter pills (Shopify's index tabs). */
+export function FilterPills<T extends string>({ value, options, onChange }: { value: T; options: { value: T; label: string; count?: number }[]; onChange: (v: T) => void }) {
+  return (
+    <div className="no-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="tablist">
+      {options.map(o => (
+        <button key={o.value || 'all'} type="button" role="tab" aria-selected={value === o.value} onClick={() => onChange(o.value)}
+          className={cn('flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[15px] font-medium transition-colors',
+            value === o.value ? 'bg-foreground text-background' : 'bg-card text-foreground hover:bg-muted')}>
+          {o.label}
+          {o.count !== undefined && <span className={cn('text-[13px] tabular-nums', value === o.value ? 'text-background/70' : 'text-muted-foreground')}>{o.count}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Search field in the iOS style. */
+export function SearchField({ value, onChange, placeholder = 'Search' }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <div className="relative mb-4">
+      <svg className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+      <input type="search" enterKeyHint="search" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} aria-label={placeholder}
+        className="h-10 w-full rounded-xl border-0 bg-muted pl-10 pr-3 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand/30" />
+    </div>
+  );
+}

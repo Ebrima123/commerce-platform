@@ -5,7 +5,7 @@ import { normalizeTheme, type PlatformStore } from '@cp/shared';
 import { useMyStore, useMyStores, useSwitchStore, storefrontUrl } from '../platform';
 import {
   Package, Palette, Globe, CreditCard, Settings, LogOut, ExternalLink, Loader2,
-  ChevronsUpDown, ChevronLeft, Check, Plus, LayoutGrid, House, ReceiptText, Paintbrush, CircleEllipsis,
+  ChevronsUpDown, ChevronLeft, Check, Plus, LayoutGrid, House, ReceiptText, Paintbrush, CircleEllipsis, Users, ChartColumn,
 } from 'lucide-react';
 import { api } from '@cp/shared';
 import { Button, cn } from '@cp/ui';
@@ -18,8 +18,10 @@ import { BarButton, ListRow, ListSection, Sheet } from './ios';
 const NAV = [
   { section: 'Store', items: [
     { to: '/', label: 'Home', icon: House, end: true },
-    { to: '/products', label: 'Products', icon: Package },
     { to: '/orders', label: 'Orders', icon: ReceiptText },
+    { to: '/products', label: 'Products', icon: Package },
+    { to: '/customers', label: 'Customers', icon: Users },
+    { to: '/analytics', label: 'Analytics', icon: ChartColumn },
   ] },
   { section: 'Online store', items: [
     { to: '/design', label: 'Design', icon: Palette },
@@ -37,7 +39,7 @@ const TABS = [
   { to: '/products', label: 'Products', icon: Package, match: (p: string) => p.startsWith('/products') },
   { to: '/orders', label: 'Orders', icon: ReceiptText, match: (p: string) => p.startsWith('/orders') },
   { to: '/design', label: 'Design', icon: Paintbrush, match: (p: string) => p.startsWith('/design') },
-  { to: '/more', label: 'More', icon: CircleEllipsis, match: (p: string) => ['/more', '/settings', '/stores', '/billing', '/domains'].some(x => p.startsWith(x)) },
+  { to: '/more', label: 'More', icon: CircleEllipsis, match: (p: string) => ['/more', '/settings', '/stores', '/billing', '/domains', '/customers', '/analytics'].some(x => p.startsWith(x)) },
 ];
 
 export interface StoreProfile {

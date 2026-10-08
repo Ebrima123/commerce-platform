@@ -12,6 +12,10 @@ import OrdersPage from './pages/OrdersPage';
 import SettingsPage from './pages/SettingsPage';
 import StoresPage from './pages/StoresPage';
 import MorePage from './pages/MorePage';
+import ProductEditPage from './pages/ProductEditPage';
+import OrderDetailPage from './pages/OrderDetailPage';
+import CustomersPage from './pages/CustomersPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 import { BillingPage, DomainsPage } from './pages/ComingSoonPages';
 
 const queryClient = new QueryClient({
@@ -32,6 +36,10 @@ export default function App() {
               <Route index element={<OverviewPage />} />
               <Route path="products" element={<ProductsPage />} />
               <Route path="orders" element={<OrdersPage />} />
+              <Route path="orders/:id" element={<OrderDetailPage />} />
+              <Route path="products/:id" element={<ProductEditPage />} />
+              <Route path="customers" element={<CustomersPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="domains" element={<DomainsPage />} />
               <Route path="billing" element={<BillingPage />} />
               <Route path="settings" element={<SettingsPage />} />

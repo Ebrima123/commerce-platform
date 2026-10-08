@@ -48,3 +48,8 @@
     [class*="animate-page"], [class*="animate-sheet"], [class*="animate-fade"], [class*="animate-pop"] { animation: none !important; }
   }
 }
+
+@layer utilities {
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+}

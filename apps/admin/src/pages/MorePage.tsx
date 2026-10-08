@@ -1,4 +1,4 @@
-import { Copy, CreditCard, ExternalLink, Globe, LayoutGrid, LogOut, Paintbrush, Settings } from 'lucide-react';
+import { ChartColumn, Copy, CreditCard, ExternalLink, Globe, LayoutGrid, LogOut, Paintbrush, Settings, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button } from '@cp/ui';
 import { PageHeader, StoreAvatar } from '../components/AdminLayout';
@@ -49,6 +49,11 @@ export default function MorePage() {
           </div>
         </div>
       )}
+
+      <ListSection header="Business">
+        <ListRow icon={Users} iconColor="#ff9500" title="Customers" subtitle="Who bought from you" to="/customers" />
+        <ListRow icon={ChartColumn} iconColor="#5856d6" title="Analytics" subtitle="Sales, best sellers and trends" to="/analytics" />
+      </ListSection>
 
       <ListSection header="Store">
         <ListRow icon={Settings} iconColor="#8e8e93" title="Store details" subtitle="Name, WhatsApp, logo" to="/settings" />

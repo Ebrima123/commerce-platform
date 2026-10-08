@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ImageIcon, Loader2, Package, Plus, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, ApiError, fmtDalasi, type Paginated, type Product } from '@cp/shared';
 import { Button, EmptyState, Skeleton } from '@cp/ui';
 import { PageHeader } from '../components/AdminLayout';
-import { BarButton, FieldRow, ListSection, Sheet, Switch, plainInput } from '../components/ios';
+import { BarButton, FieldRow, FilterPills, ListSection, Sheet, Switch, plainInput } from '../components/ios';
 import { MultiImageInput } from '../design/FieldControls';
 
 type SellerProduct = Product & { published: boolean; sku: string };
@@ -26,7 +26,9 @@ export default function ProductsPage() {
     queryFn: () => api<Paginated<SellerProduct>>(`/api/seller/products/?page_size=50${search ? `&search=${encodeURIComponent(search)}` : ''}`, { auth: true }),
     placeholderData: prev => prev,
   });
-  const products = data?.results ?? [];
+  const all = data?.results ?? [];
+  const [status, setStatus] = useState<'' | 'active' | 'draft'>('');
+  const products = all.filter(p => !status || (status === 'active') === p.published);
 
   const togglePublish = useMutation({
     mutationFn: (p: SellerProduct) => api(`/api/seller/products/${p.id}/`, { method: 'PATCH', auth: true, body: { published: !p.published } }),
@@ -41,6 +43,12 @@ export default function ProductsPage() {
         description={data ? `${data.count} product${data.count !== 1 ? 's' : ''}` : undefined}
         actions={<Button size="sm" variant="tinted" onClick={() => setCreating(true)}><Plus /> Add</Button>}
       />
+
+      <FilterPills value={status} onChange={setStatus} options={[
+        { value: '', label: 'All', count: all.length },
+        { value: 'active', label: 'Active', count: all.filter(p => p.published).length },
+        { value: 'draft', label: 'Draft', count: all.filter(p => !p.published).length },
+      ]} />
 
       <div className="relative mb-5">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
@@ -65,17 +73,17 @@ export default function ProductsPage() {
       ) : (
         <ListSection footer="Switch a product off to hide it from your store without deleting it.">
           {products.map(p => (
-            <div key={p.id} className="flex items-center gap-3 pl-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
+            <div key={p.id} className="flex items-center gap-3 pl-4 transition-colors hover:bg-muted/40">
+              <Link to={`/products/${p.id}`} className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
                 {p.image_url ? <img src={p.image_url} alt="" loading="lazy" className="h-full w-full object-cover" /> : <ImageIcon className="h-5 w-5 text-muted-foreground" />}
-              </div>
+              </Link>
               <div className="ios-sep flex min-h-[76px] min-w-0 flex-1 items-center gap-3 border-b border-border/70 py-3 pr-4">
-                <div className="min-w-0 flex-1">
+                <Link to={`/products/${p.id}`} className="min-w-0 flex-1">
                   <p className="truncate text-[17px] leading-snug">{p.name}</p>
                   <p className="mt-0.5 truncate text-[15px] text-muted-foreground">
                     <span className="font-medium text-foreground tabular-nums">{fmtDalasi(p.price)}</span> · {p.stock_quantity} in stock
                   </p>
-                </div>
+                </Link>
                 <Switch checked={p.published} onChange={() => togglePublish.mutate(p)} disabled={togglePublish.isPending}
                   label={p.published ? `Hide ${p.name} from store` : `Show ${p.name} in store`} />
               </div>
