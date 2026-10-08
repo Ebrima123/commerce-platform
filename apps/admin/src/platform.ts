@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, setApiStoreId, type PlatformStore } from '@cp/shared';
 import { useAuth } from './auth';
+import type { ProductChannel } from './commerce';
 
 export const STOREFRONT_ORIGIN = (
   (import.meta.env.VITE_STOREFRONT_ORIGIN as string | undefined)
@@ -82,3 +83,25 @@ export function storeAddressParts(): { prefix: string; suffix: string } {
 
 /** Storefront URL the theme editor embeds; it then streams the draft design in via postMessage. */
 export const previewUrl = (slug: string) => `${STOREFRONT_ORIGIN}/?store=${encodeURIComponent(slug)}&preview=1`;
+
+// ─── Product visibility per channel ───────────────────────────────────────────
+
+/** {product_id: {visible on Mariseh, Alfudi review status}} for the signed-in seller. */
+export const useProductChannels = () =>
+  useQuery({
+    queryKey: ['product-channels'],
+    queryFn: () => api<Record<string, ProductChannel>>('/api/platform/product-channels/', { auth: true }),
+  });
+
+/** Show/hide a product on Mariseh only, or ask Alfudi to review it again. */
+export function useUpdateProductChannel() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string; visible?: boolean; resubmit?: boolean }) =>
+      api<ProductChannel>(`/api/platform/product-channels/${id}/`, { method: 'PATCH', auth: true, body }),
+    onSuccess: (c, { id }) => {
+      qc.setQueryData<Record<string, ProductChannel>>(['product-channels'], prev => ({ ...(prev ?? {}), [id]: c }));
+      qc.invalidateQueries({ queryKey: ['public-store'] });
+    },
+  });
+}

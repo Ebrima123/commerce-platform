@@ -10,7 +10,7 @@ import { api, fmtDalasi, normalizeTheme, type PlatformStore } from '@cp/shared';
 import { Button, Skeleton, cn } from '@cp/ui';
 import { PageHeader } from '../components/AdminLayout';
 import { ListRow, ListSection } from '../components/ios';
-import { storefrontUrl, useMyStore } from '../platform';
+import { storefrontUrl, useMyStore, useProductChannels } from '../platform';
 import { uploadImage } from '../upload';
 
 interface DashboardStats {
@@ -134,6 +134,8 @@ function LaunchChecklist({ store, productCount, welcome }: { store: PlatformStor
 
 export default function OverviewPage() {
   const { data: store } = useMyStore();
+  const { data: channels } = useProductChannels();
+  const onMariseh = channels ? Object.values(channels).filter(c => c.visible).length : null;
   const [params] = useSearchParams();
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard'],
@@ -160,7 +162,7 @@ export default function OverviewPage() {
       <div className="mb-8 grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Stat label="Sales" icon={Wallet} color="#34c759" loading={isLoading} value={fmtDalasi(data?.revenue.last_30d)} sub="Money from orders" to="/orders" />
         <Stat label="Orders" icon={ReceiptText} color="#ff9500" loading={isLoading} value={String(data?.orders.last_30d ?? 0)} sub={`${data?.orders.pending ?? 0} waiting for you`} to="/orders" />
-        <Stat label="Products" icon={Package} color="#007aff" loading={isLoading} value={String(data?.products.total ?? 0)} sub={`${data?.products.published ?? 0} in your store`} to="/products" />
+        <Stat label="Products" icon={Package} color="#007aff" loading={isLoading} value={String(data?.products.total ?? 0)} sub={`${onMariseh ?? data?.products.published ?? 0} in your store`} to="/products" />
         <Stat label="Low stock" icon={Clock} color="#af52de" loading={isLoading} value={String(data?.products.low_stock ?? 0)} sub="Products running out" to="/products" />
       </div>
 

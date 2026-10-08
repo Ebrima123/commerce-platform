@@ -4,15 +4,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ImageIcon, Loader2, Package, Plus, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, ApiError, fmtDalasi, type Paginated, type Product } from '@cp/shared';
-import { Button, EmptyState, Skeleton } from '@cp/ui';
+import { Badge, Button, EmptyState, Skeleton } from '@cp/ui';
 import { PageHeader } from '../components/AdminLayout';
 import { BarButton, FieldRow, FilterPills, ListSection, Sheet, Switch, plainInput } from '../components/ios';
 import { MultiImageInput } from '../design/FieldControls';
+import { useProductChannels, useUpdateProductChannel } from '../platform';
+import { ALFUDI_STATUS } from '../commerce';
 
 type SellerProduct = Product & { published: boolean; sku: string };
 
 export default function ProductsPage() {
-  const qc = useQueryClient();
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const creating = params.get('new') === '1';
@@ -27,14 +28,18 @@ export default function ProductsPage() {
     placeholderData: prev => prev,
   });
   const all = data?.results ?? [];
+  // Shown on Mariseh — its own switch, separate from the Alfudi marketplace.
+  const { data: channels } = useProductChannels();
+  const live = (p: SellerProduct) => channels?.[p.id]?.visible ?? p.published;
   const [status, setStatus] = useState<'' | 'active' | 'draft'>('');
-  const products = all.filter(p => !status || (status === 'active') === p.published);
+  const products = all.filter(p => !status || (status === 'active') === live(p));
 
-  const togglePublish = useMutation({
-    mutationFn: (p: SellerProduct) => api(`/api/seller/products/${p.id}/`, { method: 'PATCH', auth: true, body: { published: !p.published } }),
-    onSuccess: (_, p) => { toast.success(p.published ? 'Hidden from your store' : 'Now showing in your store'); qc.invalidateQueries({ queryKey: ['products'] }); },
+  const updateChannel = useUpdateProductChannel();
+  const toggle = (p: SellerProduct) => updateChannel.mutate({ id: p.id, visible: !live(p) }, {
+    onSuccess: c => toast.success(c.visible ? 'Now showing in your store' : 'Hidden from your store'),
     onError: e => toast.error(e instanceof ApiError ? e.message : 'Could not update product'),
   });
+
 
   return (
     <>
@@ -46,8 +51,8 @@ export default function ProductsPage() {
 
       <FilterPills value={status} onChange={setStatus} options={[
         { value: '', label: 'All', count: all.length },
-        { value: 'active', label: 'Active', count: all.filter(p => p.published).length },
-        { value: 'draft', label: 'Draft', count: all.filter(p => !p.published).length },
+        { value: 'active', label: 'Active', count: all.filter(live).length },
+        { value: 'draft', label: 'Draft', count: all.filter(p => !live(p)).length },
       ]} />
 
       <div className="relative mb-5">
@@ -83,9 +88,12 @@ export default function ProductsPage() {
                   <p className="mt-0.5 truncate text-[15px] text-muted-foreground">
                     <span className="font-medium text-foreground tabular-nums">{fmtDalasi(p.price)}</span> · {p.stock_quantity} in stock
                   </p>
+                  {channels?.[p.id] && channels[p.id].alfudi_status !== 'alfudi' && (
+                    <Badge tone={ALFUDI_STATUS[channels[p.id].alfudi_status].tone} className="mt-1">{ALFUDI_STATUS[channels[p.id].alfudi_status].label}</Badge>
+                  )}
                 </Link>
-                <Switch checked={p.published} onChange={() => togglePublish.mutate(p)} disabled={togglePublish.isPending}
-                  label={p.published ? `Hide ${p.name} from store` : `Show ${p.name} in store`} />
+                <Switch checked={live(p)} onChange={() => toggle(p)} disabled={updateChannel.isPending}
+                  label={live(p) ? `Hide ${p.name} from store` : `Show ${p.name} in store`} />
               </div>
             </div>
           ))}
@@ -115,13 +123,14 @@ function NewProductSheet({ open, onClose }: { open: boolean; onClose: () => void
           name: form.name.trim(), price: form.price, stock_quantity: Number(form.stock_quantity) || 0,
           category: form.category.trim(), description: form.description.trim(),
           image_url: form.images[0] ?? '', image_urls: form.images,
+          // Live on Mariseh straight away (if asked); Alfudi reviews it before it goes on their marketplace.
+          channel: 'mariseh', visible: form.publish,
         },
       });
-      // New products are created as drafts; publish in a second step if asked.
-      if (form.publish) await api(`/api/seller/products/${product.id}/`, { method: 'PATCH', auth: true, body: { published: true } });
       return product;
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['product-channels'] });
       toast.success(form.publish ? 'Product added to your store' : 'Product saved (hidden)');
       qc.invalidateQueries({ queryKey: ['products'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });

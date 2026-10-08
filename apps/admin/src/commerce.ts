@@ -93,3 +93,15 @@ export function waLink(phone: string, text?: string) {
   if (digits.length === 7) digits = `220${digits}`;
   return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
 }
+
+// ─── Mariseh vs Alfudi visibility (estore-backend platform_stores.ProductChannel) ──
+
+export type AlfudiStatus = 'pending' | 'approved' | 'rejected' | 'alfudi';
+export interface ProductChannel { visible: boolean; alfudi_status: AlfudiStatus; review_note: string }
+
+export const ALFUDI_STATUS: Record<AlfudiStatus, { label: string; tone: 'neutral' | 'green' | 'amber' | 'red'; help: string }> = {
+  pending: { label: 'Alfudi: in review', tone: 'amber', help: 'Live on your Mariseh store now. Alfudi is checking it before it also appears on the Alfudi marketplace.' },
+  approved: { label: 'Also on Alfudi', tone: 'green', help: 'Approved — this product is also on the Alfudi marketplace.' },
+  rejected: { label: 'Not on Alfudi', tone: 'red', help: 'Alfudi didn’t approve it for their marketplace. It’s still on your Mariseh store.' },
+  alfudi: { label: 'Alfudi product', tone: 'neutral', help: 'Added through your Alfudi seller dashboard — manage its Alfudi listing there.' },
+};

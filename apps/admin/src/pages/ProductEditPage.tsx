@@ -8,7 +8,8 @@ import { Badge, Button, Skeleton, cn } from '@cp/ui';
 import { PageHeader } from '../components/AdminLayout';
 import { Panel, SaveBar, Sheet, BarButton } from '../components/ios';
 import { MultiImageInput } from '../design/FieldControls';
-import type { SellerProduct, Variant } from '../commerce';
+import { ALFUDI_STATUS, type ProductChannel, type SellerProduct, type Variant } from '../commerce';
+import { useProductChannels, useUpdateProductChannel } from '../platform';
 
 interface Form {
   name: string; description: string; images: string[];
@@ -16,11 +17,11 @@ interface Form {
   category: string; product_type: string; published: boolean; variants: Variant[];
 }
 
-const toForm = (p: SellerProduct): Form => ({
+const toForm = (p: SellerProduct, visible: boolean): Form => ({
   name: p.name ?? '', description: p.description ?? '', images: productImages(p),
   price: String(p.price ?? ''), cost: p.cost == null ? '' : String(p.cost), sku: p.sku ?? '',
   stock_quantity: String(p.stock_quantity ?? 0), min_stock_level: String(p.min_stock_level ?? ''),
-  category: p.category ?? '', product_type: p.product_type ?? '', published: !!p.published,
+  category: p.category ?? '', product_type: p.product_type ?? '', published: visible,
   variants: (p.variants ?? []).map(v => ({ ...v, price_override: v.price_override ?? '' })),
 });
 
@@ -29,12 +30,13 @@ const label = 'mb-1.5 block text-[13px] font-medium text-muted-foreground';
 
 export default function ProductEditPage() {
   const { id } = useParams();
+  const { data: channels, isLoading: channelsLoading } = useProductChannels();
   const { data: product, isLoading, isError } = useQuery({
     queryKey: ['product', id],
     queryFn: () => api<SellerProduct>(`/api/seller/products/${id}/`, { auth: true }),
   });
 
-  if (isLoading) {
+  if (isLoading || channelsLoading) {
     return (
       <>
         <PageHeader title="Product" back={{ to: '/products', label: 'Products' }} />
@@ -50,13 +52,15 @@ export default function ProductEditPage() {
       </>
     );
   }
-  return <Editor key={product.id} product={product} />;
+  const channel = channels?.[product.id] ?? { visible: !!product.published, alfudi_status: 'alfudi' as const, review_note: '' };
+  return <Editor key={product.id} product={product} channel={channel} />;
 }
 
-function Editor({ product }: { product: SellerProduct }) {
+function Editor({ product, channel }: { product: SellerProduct; channel: ProductChannel }) {
+  const updateChannel = useUpdateProductChannel();
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const initial = useMemo(() => toForm(product), [product]);
+  const initial = useMemo(() => toForm(product, channel.visible), [product, channel.visible]);
   const [form, setForm] = useState<Form>(initial);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm(f => ({ ...f, [k]: v }));
@@ -70,17 +74,19 @@ function Editor({ product }: { product: SellerProduct }) {
   }, [dirty]);
 
   const save = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const variants = form.variants
         .filter(v => v.size.trim() || v.color.trim())
         .map(v => ({ ...v, stock_quantity: Number(v.stock_quantity) || 0, price_override: v.price_override === '' ? null : v.price_override }));
+      // Active/Draft is the Mariseh switch — it never changes the Alfudi marketplace listing.
+      if (form.published !== initial.published) await updateChannel.mutateAsync({ id: product.id, visible: form.published });
       return api<SellerProduct>(`/api/seller/products/${product.id}/`, {
         method: 'PATCH', auth: true,
         body: {
           name: form.name.trim(), description: form.description.trim(), price: form.price,
           cost: form.cost === '' ? null : form.cost, sku: form.sku.trim(),
           stock_quantity: Number(form.stock_quantity) || 0, min_stock_level: Number(form.min_stock_level) || 0,
-          category: form.category.trim(), product_type: form.product_type.trim(), published: form.published,
+          category: form.category.trim(), product_type: form.product_type.trim(),
           image_url: form.images[0] ?? '', image_urls: form.images,
           // Only send variants when they changed — the backend replaces them all.
           ...(JSON.stringify(form.variants) !== JSON.stringify(initial.variants) ? { variants } : {}),
@@ -89,7 +95,7 @@ function Editor({ product }: { product: SellerProduct }) {
     },
     onSuccess: p => {
       // Re-read from what the server stored (it normalises e.g. "5200" → "5200.00").
-      setForm(toForm(p));
+      setForm(toForm(p, form.published));
       qc.setQueryData(['product', product.id], p);
       qc.invalidateQueries({ queryKey: ['products'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
@@ -208,7 +214,21 @@ function Editor({ product }: { product: SellerProduct }) {
                   className={cn('h-9 rounded-lg text-[15px] font-medium transition-colors', form.published === v ? 'bg-card shadow-sm' : 'text-muted-foreground')}>{l}</button>
               ))}
             </div>
-            <p className="mt-2 text-[13px] text-muted-foreground">{form.published ? 'Customers can see and order it.' : 'Hidden from your store until you make it active.'}</p>
+            <p className="mt-2 text-[13px] text-muted-foreground">{form.published ? 'Customers can see and order it on your Mariseh store.' : 'Hidden from your Mariseh store until you make it active.'}</p>
+          </Panel>
+
+          <Panel title="Alfudi marketplace">
+            <Badge tone={ALFUDI_STATUS[channel.alfudi_status].tone}>{ALFUDI_STATUS[channel.alfudi_status].label}</Badge>
+            <p className="mt-2 text-[13px] leading-snug text-muted-foreground">{ALFUDI_STATUS[channel.alfudi_status].help}</p>
+            {channel.alfudi_status === 'rejected' && (
+              <>
+                {channel.review_note && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-[13px] text-red-900">Alfudi said: {channel.review_note}</p>}
+                <Button size="sm" variant="tinted" className="mt-3" disabled={updateChannel.isPending}
+                  onClick={() => updateChannel.mutate({ id: product.id, resubmit: true }, { onSuccess: () => toast.success('Sent to Alfudi for another look') })}>
+                  Ask Alfudi again
+                </Button>
+              </>
+            )}
           </Panel>
 
           <Panel title="Organisation">
