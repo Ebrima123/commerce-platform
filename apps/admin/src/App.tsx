@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { AuthProvider } from './auth';
 import { AdminLayout, RequireAuth, RequireStore } from './components/AdminLayout';
 import LoginPage from './pages/LoginPage';
+import SSOCallbackPage from './pages/SSOCallbackPage';
 import StartPage from './pages/StartPage';
 import DesignPage from './pages/DesignPage';
 import OverviewPage from './pages/OverviewPage';
@@ -29,6 +30,8 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            {/* Back from "Continue with Alfudi" */}
+            <Route path="/sso/callback" element={<SSOCallbackPage />} />
             {/* Store wizard — open to visitors (account is the last step) and signed-in users without a store. */}
             <Route path="/start" element={<StartPage />} />
             <Route path="/design" element={<RequireAuth><RequireStore><DesignPage /></RequireStore></RequireAuth>} />

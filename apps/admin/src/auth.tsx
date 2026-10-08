@@ -16,6 +16,8 @@ interface AuthState {
   signUp: (input: SignUpInput) => Promise<Record<string, string> | null>;
   signOut: () => void;
   refreshUser: () => Promise<void>;
+  /** Start a session from tokens issued elsewhere ("Continue with Alfudi"). */
+  startSession: (data: { access: string; refresh: string; user: unknown }) => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -81,6 +83,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const startSession = useCallback((data: { access: string; refresh: string; user: unknown }) => {
+    saveTokens(data.access, data.refresh);
+    setUser(data.user as MerchantUser);
+  }, []);
+
   const signOut = useCallback(() => {
     clearSession();
     setApiStoreId(null);
@@ -89,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser, startSession }}>
       {children}
     </AuthContext.Provider>
   );
