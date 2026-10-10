@@ -41,7 +41,7 @@ function StoreCard({ store, current }: { store: PlatformStore; current: boolean 
   const qc = useQueryClient();
   const navigate = useNavigate();
   const switchStore = useSwitchStore();
-  const url = storefrontUrl(store.slug);
+  const url = storefrontUrl(store.slug, store.custom_domain);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(store.name);
 

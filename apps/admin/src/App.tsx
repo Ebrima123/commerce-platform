@@ -17,7 +17,8 @@ import ProductEditPage from './pages/ProductEditPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import CustomersPage from './pages/CustomersPage';
 import AnalyticsPage from './pages/AnalyticsPage';
-import { BillingPage, DomainsPage } from './pages/ComingSoonPages';
+import { BillingPage } from './pages/ComingSoonPages';
+import DomainsPage from './pages/DomainsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false } },

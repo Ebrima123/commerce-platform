@@ -6,8 +6,8 @@
 //   /@mystore/...               → "mystore"   (canonical shareable path)
 //   /mystore/...                → "mystore"   (short link — redirected to /@mystore/...)
 //
-// Custom domains (mystore.gm) come later: they'll be looked up by full hostname
-// against the backend instead of parsed here.
+//   awafashion.com              → looked up by hostname (customHost) against the
+//                                  backend — a merchant's own connected domain
 
 const RESERVED_HOST_LABELS = new Set(['www', 'app', 'admin', 'api', 'dashboard', 'mail']);
 // First path segments that are never store names (static files etc.).
@@ -25,6 +25,16 @@ export interface StoreLocation {
    * that full URL; the caller redirects.
    */
   subdomainUrl?: string;
+  /** A merchant's own domain (awafashion.com): the store is looked up by this host. */
+  customHost?: string;
+}
+
+/** Hosts that belong to the platform itself (never a merchant's own domain). */
+function isPlatformHost(host: string, platformDomain?: string) {
+  if (host === 'localhost' || host.endsWith('.localhost') || /^\d+\.\d+\.\d+\.\d+$/.test(host) || host === '[::1]') return true;
+  if (host.endsWith('.vercel.app')) return true;
+  const roots = ['mariseh.com', 'mariseh.shop', ...(platformDomain ? [platformDomain] : [])];
+  return roots.some(r => host === r || host.endsWith(`.${r}`));
 }
 
 const sanitize = (s: string) => s.trim().toLowerCase().replace(/^@/, '').replace(/[^a-z0-9_-]/g, '') || null;
@@ -35,9 +45,14 @@ export function resolveStoreLocation(location: Pick<Location, 'hostname' | 'path
 
   const host = location.hostname.toLowerCase();
   const platformDomain = (import.meta.env.VITE_PLATFORM_DOMAIN as string | undefined)?.trim().toLowerCase();
+  if (!isPlatformHost(host, platformDomain)) return { slug: null, basePath: '', customHost: host.replace(/^www\./, '') };
   let sub: string | undefined;
   if (host.endsWith('.localhost')) sub = host.slice(0, -'.localhost'.length);
-  else if (platformDomain && host.endsWith(`.${platformDomain}`)) sub = host.slice(0, -(platformDomain.length + 1));
+  else {
+    // Store subdomains (shop.mariseh.com) resolve even before VITE_PLATFORM_DOMAIN is set.
+    const root = platformDomain || 'mariseh.com';
+    if (host.endsWith(`.${root}`)) sub = host.slice(0, -(root.length + 1));
+  }
   if (sub && !sub.includes('.') && !RESERVED_HOST_LABELS.has(sub)) return { slug: sanitize(sub), basePath: '' };
 
   const [, first = '', ...rest] = location.pathname.split('/');

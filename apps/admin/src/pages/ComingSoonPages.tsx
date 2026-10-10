@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
-import { CreditCard, Globe } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 import { EmptyState } from '@cp/ui';
 import { PageHeader } from '../components/AdminLayout';
 
 // Placeholders for the roadmap phases that need new backend models first
-// (Subscription, Domain).
+// (Subscription).
 
 function ComingSoon({ title, description, icon, detail }: { title: string; description: string; icon: ReactNode; detail: string }) {
   return (
@@ -14,11 +14,6 @@ function ComingSoon({ title, description, icon, detail }: { title: string; descr
     </>
   );
 }
-
-export const DomainsPage = () => (
-  <ComingSoon title="Domains" description="Where customers find your store." icon={<Globe className="h-6 w-6" />}
-    detail="Your store already has its own link. Connecting your own domain (e.g. mystore.com) arrives in a later release." />
-);
 
 export const BillingPage = () => (
   <ComingSoon title="Billing" description="Your plan and invoices." icon={<CreditCard className="h-6 w-6" />}

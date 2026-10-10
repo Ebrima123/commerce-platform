@@ -11,7 +11,7 @@ import CategoriesPage from './pages/CategoriesPage';
 import { MarketplaceShell } from './components/marketplace/MarketplaceShell';
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
-import { ComingSoonPage, StoreNotFoundPage } from './pages/StatusPages';
+import { ComingSoonPage, DomainNotConnectedPage, StoreNotFoundPage } from './pages/StatusPages';
 import LandingPage from './pages/LandingPage';
 import { CanvasDropZone } from './sections/EditorFrame';
 
@@ -20,12 +20,14 @@ const queryClient = new QueryClient({
 });
 
 function Storefront() {
-  const { slug, basePath, store, isLoading, isError, preview } = useStore();
-  // No store in the address → the platform's own landing page.
-  if (!slug) return <LandingPage />;
+  const { slug, customHost, basePath, store, isLoading, isError, preview } = useStore();
   if (isLoading) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   }
+  // A domain pointed here that isn't connected to any store.
+  if (customHost && !slug) return <DomainNotConnectedPage host={customHost} />;
+  // No store in the address → the platform's own landing page.
+  if (!slug) return <LandingPage />;
   if (isError || !store) return <StoreNotFoundPage slug={slug} />;
   // Marketplace style (SHEIN / Temu / Alfudi-like) vs. the boutique layouts.
   const marketplace = store.theme.template === 'marketplace';

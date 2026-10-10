@@ -67,10 +67,12 @@ const PLATFORM_DOMAIN = (import.meta.env.VITE_PLATFORM_DOMAIN as string | undefi
 
 /**
  * Public address of a store:
+ *   https://awafashion.com                the merchant's own connected domain, if any
  *   https://slug.<VITE_PLATFORM_DOMAIN>   once a custom wildcard domain is set up
  *   <storefront>/@slug                    otherwise (short form <storefront>/slug redirects here)
  */
-export function storefrontUrl(slug: string) {
+export function storefrontUrl(slug: string, customDomain?: string | null) {
+  if (customDomain) return `https://${customDomain}`;
   if (PLATFORM_DOMAIN) return `https://${slug}.${PLATFORM_DOMAIN}`;
   return `${STOREFRONT_ORIGIN}/@${encodeURIComponent(slug)}`;
 }

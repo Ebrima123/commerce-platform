@@ -44,7 +44,7 @@ const writeFlag = (k: string) => { try { localStorage.setItem(k, '1'); } catch {
 
 function LaunchChecklist({ store, productCount, welcome }: { store: PlatformStore; productCount: number; welcome: boolean }) {
   const qc = useQueryClient();
-  const url = storefrontUrl(store.slug);
+  const url = storefrontUrl(store.slug, store.custom_domain);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [shared, setShared] = useState(() => readFlag(SHARED_KEY(store.id)));
@@ -141,7 +141,7 @@ export default function OverviewPage() {
     queryKey: ['dashboard'],
     queryFn: () => api<DashboardStats>('/api/seller/dashboard/?range=30d', { auth: true }),
   });
-  const url = store ? storefrontUrl(store.slug) : '';
+  const url = store ? storefrontUrl(store.slug, store.custom_domain) : '';
   const welcome = params.get('welcome') === '1';
   const noProducts = !isLoading && (data?.products.total ?? 0) === 0;
   const copy = () => navigator.clipboard.writeText(url).then(() => toast.success('Store link copied'));

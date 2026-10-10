@@ -21,6 +21,8 @@ export interface StoreView {
   bannerUrl: string;
   whatsapp: string;
   location: string;
+  /** The merchant's own connected domain (awafashion.com), if any. */
+  customDomain: string | null;
 }
 
 async function loadStore(slug: string): Promise<StoreView> {
@@ -30,6 +32,7 @@ async function loadStore(slug: string): Promise<StoreView> {
       source: 'platform', slug: s.slug, name: s.name, published: s.published,
       theme: normalizeTheme(s.theme, s.name), ownerId: s.owner_id, avatarUrl: s.avatar_url,
       description: s.description, bannerUrl: s.banner_url, whatsapp: s.whatsapp, location: s.location,
+      customDomain: s.custom_domain || null,
     };
   } catch (platformError) {
     // Not a platform store (404) — or the platform API is unavailable — so try
@@ -48,7 +51,7 @@ async function loadLegacyStore(slug: string): Promise<StoreView> {
   return {
     source: 'legacy', slug, name, published: true, theme: normalizeTheme(null, name), ownerId: s.id,
     avatarUrl: s.avatar_url, description: s.store_description, bannerUrl: s.store_banner_url,
-    whatsapp: s.store_whatsapp, location: s.store_location,
+    whatsapp: s.store_whatsapp, location: s.store_location, customDomain: null,
   };
 }
 
@@ -57,6 +60,8 @@ export const ADMIN_ORIGIN = ((import.meta.env.VITE_ADMIN_ORIGIN as string | unde
 
 interface StoreState {
   slug: string | null;
+  /** On a merchant's own domain: the host, while/after looking up its store. */
+  customHost?: string;
   /** Router basename for path-based stores ("/@slug"), "" otherwise. */
   basePath: string;
   store: StoreView | undefined;
@@ -75,12 +80,21 @@ const StoreContext = createContext<StoreState | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   // Resolve once per page load; short links (/mystore/...) become /@mystore/...
-  const { slug, basePath, subdomainUrl } = useMemo(() => {
+  const { slug: pathSlug, basePath, subdomainUrl, customHost } = useMemo(() => {
     const loc = resolveStoreLocation();
     if (loc.subdomainUrl) window.location.replace(loc.subdomainUrl + window.location.hash);
     else if (loc.canonicalPath) window.history.replaceState(null, '', loc.canonicalPath + window.location.search + window.location.hash);
     return loc;
   }, []);
+  // A merchant's own domain → ask the backend which store it belongs to.
+  const domainLookup = useQuery({
+    queryKey: ['store-by-domain', customHost],
+    queryFn: () => api<{ slug: string }>(`/api/platform/public/by-domain/?host=${encodeURIComponent(customHost!)}`),
+    enabled: !!customHost,
+    staleTime: 30 * 60_000,
+    retry: (count, e) => !(e instanceof ApiError && e.status === 404) && count < 2,
+  });
+  const slug = customHost ? (domainLookup.data?.slug ?? null) : pathSlug;
   const preview = useMemo(() => new URLSearchParams(window.location.search).get('preview') === '1' && window.parent !== window, []);
   const [draft, setDraft] = useState<Theme | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -111,15 +125,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (data) document.title = data.name;
   }, [data]);
 
+  // The shop has its own domain: visits to slug.mariseh.com / mariseh.com/@slug move there.
+  const toCustomDomain = !!data?.customDomain && !customHost && !preview && !import.meta.env.DEV
+    && !new URLSearchParams(window.location.search).has('store');
+  useEffect(() => {
+    if (!toCustomDomain || !data?.customDomain) return;
+    const path = window.location.pathname.slice(basePath.length) || '/';
+    window.location.replace(`https://${data.customDomain}${path}${window.location.search}${window.location.hash}`);
+  }, [toCustomDomain, data?.customDomain, basePath]);
+
   const store = data && draft ? { ...data, theme: draft } : data;
   const postToEditor = (msg: PreviewMessage) => { if (preview) window.parent.postMessage(msg, ADMIN_ORIGIN); };
   const selectSection = (id: string) => postToEditor({ type: 'cp:select', id });
 
-  // Moving to the shop's own subdomain — render nothing in the meantime.
-  if (subdomainUrl) return null;
+  // Moving to the shop's own subdomain / domain — render nothing in the meantime.
+  if (subdomainUrl || toCustomDomain) return null;
 
   return (
-    <StoreContext.Provider value={{ slug, basePath, store, isLoading: !!slug && isLoading, isError, preview, highlightId, selectSection, postToEditor }}>
+    <StoreContext.Provider value={{
+      slug, customHost, basePath, store,
+      isLoading: (!!slug && isLoading) || (!!customHost && domainLookup.isLoading),
+      isError: isError || (!!customHost && domainLookup.isError),
+      preview, highlightId, selectSection, postToEditor,
+    }}>
       {children}
     </StoreContext.Provider>
   );

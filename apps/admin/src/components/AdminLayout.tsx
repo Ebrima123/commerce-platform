@@ -107,7 +107,7 @@ function StoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
       <ListSection>
         {stores.map(s => (
           <ListRow key={s.id} leading={<StoreAvatar store={s} />} title={s.name}
-            subtitle={storefrontUrl(s.slug).replace(/^https?:\/\//, '')}
+            subtitle={storefrontUrl(s.slug, s.custom_domain).replace(/^https?:\/\//, '')}
             trailing={s.id === store?.id ? <Check className="h-5 w-5 shrink-0 text-brand" strokeWidth={2.5} /> : <span />}
             onClick={() => { switchStore(s.id); onClose(); navigate('/'); }} />
         ))}
@@ -211,7 +211,7 @@ function Sidebar() {
 
       <div className="space-y-1 p-3">
         {store && (
-          <a href={storefrontUrl(store.slug)} target="_blank" rel="noopener noreferrer"
+          <a href={storefrontUrl(store.slug, store.custom_domain)} target="_blank" rel="noopener noreferrer"
             className="flex items-center justify-between rounded-xl px-3 py-2 text-[15px] text-brand hover:bg-black/[0.04]">
             View my store <ExternalLink className="h-4 w-4" />
           </a>

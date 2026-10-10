@@ -17,7 +17,7 @@ export default function MorePage() {
   const { data: store } = useMyStore();
   const { data: stores = [] } = useMyStores();
   const { user, signOut } = useAuth();
-  const url = store ? storefrontUrl(store.slug) : '';
+  const url = store ? storefrontUrl(store.slug, store.custom_domain) : '';
   const copy = () => navigator.clipboard.writeText(url).then(() => toast.success('Store link copied'));
 
   return (

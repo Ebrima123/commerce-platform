@@ -234,7 +234,7 @@ function Editor({ store }: { store: PlatformStore }) {
           <Switch checked={store.published} disabled={publish.isPending} onChange={v => publish.mutate(v)} label="Store is live" />
           {store.published ? 'Live' : 'Hidden'}
         </label>
-        <a href={storefrontUrl(store.slug)} target="_blank" rel="noopener noreferrer" aria-label="View store" title="View store"
+        <a href={storefrontUrl(store.slug, store.custom_domain)} target="_blank" rel="noopener noreferrer" aria-label="View store" title="View store"
           className="hidden h-9 w-9 items-center justify-center rounded-lg text-zinc-300 hover:bg-white/10 hover:text-white sm:flex"><ExternalLink className="h-[18px] w-[18px]" /></a>
         <Button size="sm" className="h-9 px-4" onClick={doSave} disabled={!editor.dirty || save.isPending}>
           {save.isPending ? <Loader2 className="animate-spin" /> : null}

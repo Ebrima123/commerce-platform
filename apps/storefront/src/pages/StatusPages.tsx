@@ -20,6 +20,16 @@ export function StoreNotFoundPage({ slug }: { slug: string }) {
   );
 }
 
+/** Someone's domain points at Mariseh, but no store has connected it. */
+export function DomainNotConnectedPage({ host }: { host: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center px-4">
+      <EmptyState icon={<Store className="h-5 w-5" />} title="This domain isn't connected yet"
+        description={`${host} points to Mariseh but isn't connected to a store. If it's yours, connect it in your Mariseh admin under Domains.`} />
+    </div>
+  );
+}
+
 /** Store exists but the merchant hasn't published it yet. */
 export function ComingSoonPage({ name }: { name: string }) {
   return (
