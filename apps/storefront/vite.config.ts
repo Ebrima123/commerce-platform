@@ -6,7 +6,7 @@ import path from 'node:path';
 // allowance for localhost (or *.localhost store subdomains).
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const target = env.API_PROXY_TARGET || 'https://estore-backend-rdnf.onrender.com';
+  const target = env.API_PROXY_TARGET || 'https://estore-backend-6on4.onrender.com';
   return {
     plugins: [react()],
     resolve: { alias: { '@': path.resolve(__dirname, './src') } },
