@@ -6,7 +6,7 @@ export function NoStorePage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <EmptyState icon={<Store className="h-5 w-5" />} title="No store selected"
-        description="Stores live at their own link, like this-site/@storename. Check the link you were given." />
+        description="Stores live at their own link, like storename.mariseh.com. Check the link you were given." />
     </div>
   );
 }

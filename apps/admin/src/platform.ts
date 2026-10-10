@@ -63,24 +63,29 @@ export function useSwitchStore() {
   };
 }
 
-const PLATFORM_DOMAIN = (import.meta.env.VITE_PLATFORM_DOMAIN as string | undefined)?.trim() || '';
+// Every store lives at its own subdomain: shop.mariseh.com (shop.localhost:5174 in dev).
+const PLATFORM_DOMAIN = (import.meta.env.VITE_PLATFORM_DOMAIN as string | undefined)?.trim()
+  || (import.meta.env.PROD ? 'mariseh.com' : '');
+const DEV_STOREFRONT = new URL(STOREFRONT_ORIGIN);
+/** Store host for a slug, e.g. "awa-fashion.mariseh.com". */
+const storeHost = (slug: string) => (PLATFORM_DOMAIN ? `${slug}.${PLATFORM_DOMAIN}` : `${slug}.localhost:${DEV_STOREFRONT.port || 5174}`);
+// Only hostname-safe slugs can be subdomains (older Alfudi usernames may not be).
+const SUBDOMAIN_SAFE = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 
 /**
  * Public address of a store:
- *   https://awafashion.com                the merchant's own connected domain, if any
- *   https://slug.<VITE_PLATFORM_DOMAIN>   once a custom wildcard domain is set up
- *   <storefront>/@slug                    otherwise (short form <storefront>/slug redirects here)
+ *   https://awafashion.com      the merchant's own connected domain, if any
+ *   https://slug.mariseh.com    otherwise
  */
 export function storefrontUrl(slug: string, customDomain?: string | null) {
   if (customDomain) return `https://${customDomain}`;
-  if (PLATFORM_DOMAIN) return `https://${slug}.${PLATFORM_DOMAIN}`;
-  return `${STOREFRONT_ORIGIN}/@${encodeURIComponent(slug)}`;
+  if (!SUBDOMAIN_SAFE.test(slug)) return `${STOREFRONT_ORIGIN}/@${encodeURIComponent(slug)}`;
+  return PLATFORM_DOMAIN ? `https://${storeHost(slug)}` : `${DEV_STOREFRONT.protocol}//${storeHost(slug)}`;
 }
 
 /** How the wizard displays the address around the slug input. */
 export function storeAddressParts(): { prefix: string; suffix: string } {
-  if (PLATFORM_DOMAIN) return { prefix: '', suffix: `.${PLATFORM_DOMAIN}` };
-  return { prefix: `${new URL(STOREFRONT_ORIGIN).host}/@`, suffix: '' };
+  return { prefix: '', suffix: '.' + storeHost('x').split('.').slice(1).join('.') };
 }
 
 /** Storefront URL the theme editor embeds; it then streams the draft design in via postMessage. */

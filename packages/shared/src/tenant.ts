@@ -1,7 +1,7 @@
 // Which store is this storefront request for?
 //
 //   ?store=mystore              → "mystore"   (editor preview / explicit override)
-//   mystore.<PLATFORM_DOMAIN>   → "mystore"   (custom wildcard domain, when configured)
+//   mystore.mariseh.com         → "mystore"   (every store's own address)
 //   mystore.localhost:5174      → "mystore"   (local dev subdomains)
 //   /@mystore/...               → "mystore"   (canonical shareable path)
 //   /mystore/...                → "mystore"   (short link — redirected to /@mystore/...)
@@ -20,9 +20,8 @@ export interface StoreLocation {
   /** Set when the URL is the short form (/mystore/...) and should become /@mystore/... */
   canonicalPath?: string;
   /**
-   * With store subdomains on (VITE_PLATFORM_DOMAIN), a path-based visit on the
-   * main domain (mariseh.com/@shop/...) belongs on shop.mariseh.com/... — this is
-   * that full URL; the caller redirects.
+   * A path-based visit on the main domain (mariseh.com/@shop/...) belongs on
+   * shop.mariseh.com/... — this is that full URL; the caller redirects.
    */
   subdomainUrl?: string;
   /** A merchant's own domain (awafashion.com): the store is looked up by this host. */
@@ -62,11 +61,12 @@ export function resolveStoreLocation(location: Pick<Location, 'hostname' | 'path
   const slug = sanitize(segment);
   if (!slug) return { slug: null, basePath: '' };
 
-  // Subdomains on and we're on the main domain: send the visitor to the shop's own address.
-  const onMainDomain = !!platformDomain && (host === platformDomain || host === `www.${platformDomain}`);
+  // On the main domain (mariseh.com/@shop or /shop): send the visitor to the shop's own address, shop.mariseh.com.
+  const root = platformDomain || 'mariseh.com';
+  const onMainDomain = host === root || host === `www.${root}`;
   if (onMainDomain && /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(slug)) {
     const path = rest.length ? `/${rest.join('/')}` : '/';
-    return { slug, basePath: '', subdomainUrl: `https://${slug}.${platformDomain}${path}${location.search}` };
+    return { slug, basePath: '', subdomainUrl: `https://${slug}.${root}${path}${location.search}` };
   }
 
   const basePath = `/@${slug}`;

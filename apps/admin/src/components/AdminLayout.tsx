@@ -160,7 +160,7 @@ function StoreSwitcher() {
                   <StoreAvatar store={s} className="h-8 w-8 text-[13px]" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] font-medium">{s.name}</span>
-                    <span className="block truncate text-[13px] text-muted-foreground">/@{s.slug}</span>
+                    <span className="block truncate text-[13px] text-muted-foreground">{storefrontUrl(s.slug, s.custom_domain).replace(/^https?:\/\//, '')}</span>
                   </span>
                   {s.id === store?.id && <Check className="h-4 w-4 shrink-0 text-brand" strokeWidth={2.5} />}
                 </button>

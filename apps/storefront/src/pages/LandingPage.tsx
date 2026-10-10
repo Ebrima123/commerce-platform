@@ -15,8 +15,8 @@ import { Img, Reveal, WhatsAppIcon } from '../components/primitives';
 
 const START = `${ADMIN_ORIGIN}/start`;
 // Example store addresses: shopname.mariseh.com once store subdomains are on, else mariseh.com/@shopname.
-const PLATFORM_DOMAIN = (import.meta.env.VITE_PLATFORM_DOMAIN as string | undefined)?.trim();
-const storeLink = (name: string) => (PLATFORM_DOMAIN ? `${name}.${PLATFORM_DOMAIN}` : `mariseh.com/@${name}`);
+const PLATFORM_DOMAIN = (import.meta.env.VITE_PLATFORM_DOMAIN as string | undefined)?.trim() || 'mariseh.com';
+const storeLink = (name: string) => `${name}.${PLATFORM_DOMAIN}`;
 const SIGN_IN = `${ADMIN_ORIGIN}/login`;
 const GREEN = '#1bc152';       // logo green — highlights on dark
 const wrap = 'mx-auto w-full max-w-7xl px-5 sm:px-8';
@@ -26,7 +26,7 @@ const heroImg = (key: IndustryKey, w = 600) => {
   return typeof hero === 'string' ? hero.replace(/w=\d+/, `w=${w}`) : '';
 };
 
-function StartButton({ children = 'Start your store', className, variant = 'dark' }: { children?: ReactNode; className?: string; variant?: 'dark' | 'light' | 'green' }) {
+function StartButton({ children = 'Start for free', className, variant = 'dark' }: { children?: ReactNode; className?: string; variant?: 'dark' | 'light' | 'green' }) {
   return (
     <a href={START}
       className={cn('inline-flex h-12 items-center justify-center gap-2 rounded-full px-7 text-[15px] font-semibold transition-[transform,background-color] hover:-translate-y-0.5 active:scale-[0.98] sm:h-14 sm:px-8 sm:text-base',
@@ -268,7 +268,7 @@ export default function LandingPage() {
           <div className="hidden items-center gap-5 md:flex">
             <a href={SIGN_IN} className={cn('text-[15px] font-medium', onDark ? 'text-white/80 hover:text-white' : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white')}>Log in</a>
             <a href={START} className={cn('inline-flex h-11 items-center rounded-full px-5 text-[15px] font-semibold transition-colors',
-              onDark ? 'bg-white text-zinc-950 hover:bg-zinc-100' : 'bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200')}>Start your store</a>
+              onDark ? 'bg-white text-zinc-950 hover:bg-zinc-100' : 'bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200')}>Start for free</a>
           </div>
           <button type="button" onClick={() => setMenu(m => !m)} aria-label="Menu" aria-expanded={menu}
             className={cn('flex h-11 w-11 items-center justify-center rounded-full md:hidden', onDark ? 'hover:bg-white/10' : 'hover:bg-zinc-100 dark:hover:bg-white/10')}>
@@ -537,7 +537,7 @@ export default function LandingPage() {
           <div>
             <Eyebrow>FAQ</Eyebrow>
             <h2 className="mt-4 text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] sm:text-5xl">Questions, answered.</h2>
-            <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">Anything else? Start your store and look around — it only takes a minute.</p>
+            <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">Anything else? Start for free and look around — it only takes a minute.</p>
           </div>
           <div className="divide-y divide-zinc-200 border-y border-zinc-200 dark:divide-white/10 dark:border-white/10">
             {FAQS.map((f, i) => {
@@ -581,7 +581,7 @@ export default function LandingPage() {
       )}>
         <a href={START} tabIndex={pastHero ? undefined : -1}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-zinc-950 text-[15px] font-semibold text-white active:scale-[0.98] dark:bg-white dark:text-zinc-950">
-          Start your store <ArrowRight className="h-5 w-5" />
+          Start for free <ArrowRight className="h-5 w-5" />
         </a>
       </div>
 
@@ -594,7 +594,7 @@ export default function LandingPage() {
           </div>
           {[
             ['Product', [['Features', '#features'], ['Store styles', '#styles'], ['How it works', '#how']]],
-            ['Get started', [['Start your store', START], ['Log in', SIGN_IN]]],
+            ['Get started', [['Start for free', START], ['Log in', SIGN_IN]]],
             ['Help', [['FAQ', '#faq']]],
           ].map(([title, links]) => (
             <div key={title as string}>
@@ -630,7 +630,7 @@ function Feature({ eyebrow, title, text, points, visual, reverse }: {
           ))}
         </ul>
         <a href={START} className="mt-8 inline-flex items-center gap-2 text-[17px] font-semibold text-zinc-950 underline-offset-4 hover:underline dark:text-white">
-          Start your store <ArrowRight className="h-5 w-5" />
+          Start for free <ArrowRight className="h-5 w-5" />
         </a>
       </Reveal>
       <Reveal className={cn(reverse && 'lg:order-1')} delay={120}>{visual}</Reveal>
