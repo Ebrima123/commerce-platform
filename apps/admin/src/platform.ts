@@ -88,6 +88,17 @@ export function storeAddressParts(): { prefix: string; suffix: string } {
   return { prefix: '', suffix: '.' + storeHost('x').split('.').slice(1).join('.') };
 }
 
+/** Paid, not-yet-used extra-store unlocks (only fetched for merchants who already have a store). */
+export function useStoreUnlocks(enabled = true) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['store-unlocks', user?.id],
+    queryFn: () => api<{ price: number; unlocks_available: number }>('/api/platform/store-purchases/', { auth: true }),
+    enabled: !!user && enabled,
+    staleTime: 30_000,
+  });
+}
+
 /** One-off price (Dalasi) of each store after a merchant's first — mirrors MARISEH_EXTRA_STORE_PRICE on the backend. */
 export const EXTRA_STORE_PRICE = 100;
 

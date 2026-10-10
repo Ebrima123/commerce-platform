@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, ArrowRight, Check, Loader2, Shirt, Smartphone, Flower2, ShoppingBasket, Sofa, Store,
   Sparkles, X, type LucideIcon,
@@ -12,7 +12,7 @@ import {
 import { Button, Card, Input, Label, cn } from '@cp/ui';
 import { useAuth } from '../auth';
 import { toast } from 'sonner';
-import { useMyStore, selectStoreId, storeAddressParts, EXTRA_STORE_PRICE } from '../platform';
+import { useMyStore, selectStoreId, storeAddressParts, EXTRA_STORE_PRICE, useStoreUnlocks } from '../platform';
 
 const INDUSTRY_ICONS: Record<string, LucideIcon> = {
   shirt: Shirt, smartphone: Smartphone, flower: Flower2, 'shopping-basket': ShoppingBasket, sofa: Sofa, store: Store,
@@ -229,11 +229,7 @@ export default function StartPage() {
   const [account, setAccount] = useState({ full_name: '', username: '', email: '', password: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   // Extra stores need a paid unlock first (the first store is free).
-  const unlocks = useQuery({
-    queryKey: ['store-unlocks', user?.id],
-    queryFn: () => api<{ price: number; unlocks_available: number }>('/api/platform/store-purchases/', { auth: true }),
-    enabled: !!user && !!existing,
-  });
+  const unlocks = useStoreUnlocks(!!existing);
 
   useEffect(() => { if (!slugEdited) setSlug(slugify(name)); }, [name, slugEdited]);
   const { checking, result, failed: checkFailed } = useSlugCheck(slug);
