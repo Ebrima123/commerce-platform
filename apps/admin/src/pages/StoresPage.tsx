@@ -8,7 +8,7 @@ import {
 import { api, ApiError, INDUSTRIES, normalizeTheme, type IndustryKey, type PlatformStore } from '@cp/shared';
 import { Badge, Button, Card, Input, Skeleton, cn } from '@cp/ui';
 import { PageHeader } from '../components/AdminLayout';
-import { storefrontUrl, useMyStore, useMyStores, useSwitchStore } from '../platform';
+import { EXTRA_STORE_PRICE, storefrontUrl, useMyStore, useMyStores, useSwitchStore } from '../platform';
 
 const MAX_STORES = 10; // mirrors MAX_STORES_PER_OWNER in estore-backend/platform_stores/views.py
 
@@ -145,7 +145,7 @@ export default function StoresPage() {
               className="group flex min-h-[320px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-300 p-6 text-center transition-[colors,transform] hover:border-brand/50 hover:bg-card active:scale-[0.98]">
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand/10 text-brand transition-transform group-hover:scale-105"><Plus className="h-6 w-6" /></span>
               <span className="mt-4 text-base font-semibold">Add a new store</span>
-              <span className="mt-1 max-w-[220px] text-sm text-muted-foreground">Sell something different? Open another shop in a few clicks.</span>
+              <span className="mt-1 max-w-[220px] text-sm text-muted-foreground">Sell something different? Open another shop for a one-off D{EXTRA_STORE_PRICE}.</span>
             </Link>
           )}
         </div>

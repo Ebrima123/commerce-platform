@@ -6,6 +6,7 @@ import { AdminLayout, RequireAuth, RequireStore } from './components/AdminLayout
 import LoginPage from './pages/LoginPage';
 import SSOCallbackPage from './pages/SSOCallbackPage';
 import StartPage from './pages/StartPage';
+import StorePaymentPage from './pages/StorePaymentPage';
 import DesignPage from './pages/DesignPage';
 import OverviewPage from './pages/OverviewPage';
 import ProductsPage from './pages/ProductsPage';
@@ -35,6 +36,8 @@ export default function App() {
             <Route path="/sso/callback" element={<SSOCallbackPage />} />
             {/* Store wizard — open to visitors (account is the last step) and signed-in users without a store. */}
             <Route path="/start" element={<StartPage />} />
+            {/* Back from ModemPay after paying for an extra store */}
+            <Route path="/start/paid" element={<RequireAuth><StorePaymentPage /></RequireAuth>} />
             <Route path="/design" element={<RequireAuth><RequireStore><DesignPage /></RequireStore></RequireAuth>} />
             <Route element={<RequireAuth><RequireStore><AdminLayout /></RequireStore></RequireAuth>}>
               <Route index element={<OverviewPage />} />

@@ -12,7 +12,7 @@ import {
 import { Button, Card, Input, Label, cn } from '@cp/ui';
 import { useAuth } from '../auth';
 import { toast } from 'sonner';
-import { useMyStore, selectStoreId, storeAddressParts } from '../platform';
+import { useMyStore, selectStoreId, storeAddressParts, EXTRA_STORE_PRICE } from '../platform';
 
 const INDUSTRY_ICONS: Record<string, LucideIcon> = {
   shirt: Shirt, smartphone: Smartphone, flower: Flower2, 'shopping-basket': ShoppingBasket, sofa: Sofa, store: Store,
@@ -22,7 +22,7 @@ type Step = 'name' | 'industry' | 'look' | 'account' | 'creating';
 
 // ─── Slug availability (debounced) ────────────────────────────────────────────
 
-function useSlugCheck(slug: string) {
+export function useSlugCheck(slug: string) {
   const [state, setState] = useState<{ checking: boolean; result: SlugCheck | null; failed: boolean }>({ checking: false, result: null, failed: false });
   useEffect(() => {
     if (slug.length < 3) { setState({ checking: false, result: null, failed: false }); return; }
@@ -228,6 +228,8 @@ export default function StartPage() {
   const swatches = [...new Set([...(industry ? INDUSTRIES[industry].colors : []), ...BRAND_SWATCHES])].slice(0, 12);
   const [account, setAccount] = useState({ full_name: '', username: '', email: '', password: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Whether the store being created right now is a paid extra one (fixed when creation starts).
+  const payingRef = useRef(false);
 
   useEffect(() => { if (!slugEdited) setSlug(slugify(name)); }, [name, slugEdited]);
   const { checking, result, failed: checkFailed } = useSlugCheck(slug);
@@ -251,15 +253,24 @@ export default function StartPage() {
   const steps: Step[] = user ? ['name', 'industry', 'look'] : ['name', 'industry', 'look', 'account'];
   const stepIndex = steps.indexOf(step);
 
+  // The first store is free; every extra one is paid for with ModemPay first.
+  const paid = !!existing;
   const create = async () => {
+    payingRef.current = paid;
     setStep('creating');
     setErrors({});
     try {
       const theme = generateTheme({ storeName: name.trim(), industry: industry ?? 'general', template, primaryColor: color });
-      const created = await api<PlatformStore>('/api/platform/stores/', {
-        method: 'POST', auth: true,
-        body: { name: name.trim(), slug, industry: industry ?? 'general', theme, whatsapp: whatsapp.trim() },
-      });
+      const details = { name: name.trim(), slug, industry: industry ?? 'general', theme, whatsapp: whatsapp.trim() };
+      if (paid) {
+        const { checkout_url } = await api<{ id: string; checkout_url: string }>('/api/platform/store-purchases/', {
+          method: 'POST', auth: true,
+          body: { ...details, return_url: `${window.location.origin}/start/paid`, cancel_url: `${window.location.origin}/start/paid` },
+        });
+        window.location.href = checkout_url; // ModemPay → back to /start/paid?purchase=…
+        return;
+      }
+      const created = await api<PlatformStore>('/api/platform/stores/', { method: 'POST', auth: true, body: details });
       selectStoreId(created.id);
       qc.removeQueries({ predicate: q => q.queryKey[0] !== 'my-stores' });
       await qc.invalidateQueries({ queryKey: ['my-stores'] });
@@ -298,8 +309,8 @@ export default function StartPage() {
         <div className="relative mb-6 flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg" style={{ background: color }}>
           <Sparkles className="h-6 w-6 animate-pulse" />
         </div>
-        <h1 className="text-xl font-semibold tracking-tight">Building {name.trim() || 'your store'}…</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Setting up your pages, sections and colours.</p>
+        <h1 className="text-xl font-semibold tracking-tight">{payingRef.current ? 'Taking you to payment…' : `Building ${name.trim() || 'your store'}…`}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{payingRef.current ? `Pay D${EXTRA_STORE_PRICE} securely with ModemPay, then we'll build your new store.` : 'Setting up your pages, sections and colours.'}</p>
       </div>
     );
   }
@@ -444,6 +455,13 @@ export default function StartPage() {
             </StepCard>
           )}
 
+          {paid && stepIndex === steps.length - 1 && (
+            <div className="mt-4 rounded-xl border border-border bg-card px-4 py-3 text-sm">
+              <p className="font-medium">This is an extra store: a one-off D{EXTRA_STORE_PRICE}</p>
+              <p className="mt-0.5 text-muted-foreground">Your first store is free. You'll pay securely with ModemPay (Wave, cards and more), then {name.trim() || 'your new store'} is created straight away.</p>
+            </div>
+          )}
+
           {errors.form && <p role="alert" className="mt-4 text-sm text-destructive">{errors.form}</p>}
 
           <div className="mt-6 flex items-center justify-between">
@@ -451,7 +469,7 @@ export default function StartPage() {
               <Button type="button" variant="ghost" onClick={back}><ArrowLeft /> Back</Button>
             ) : <span />}
             <Button type="submit" size="lg" disabled={!canContinue}>
-              {stepIndex === steps.length - 1 ? <>Create my store <Sparkles /></> : <>Continue <ArrowRight /></>}
+              {stepIndex === steps.length - 1 ? (paid ? <>Pay D{EXTRA_STORE_PRICE} &amp; create store <Sparkles /></> : <>Create my store <Sparkles /></>) : <>Continue <ArrowRight /></>}
             </Button>
           </div>
         </form>

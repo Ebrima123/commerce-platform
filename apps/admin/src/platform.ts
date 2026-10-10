@@ -88,6 +88,9 @@ export function storeAddressParts(): { prefix: string; suffix: string } {
   return { prefix: '', suffix: '.' + storeHost('x').split('.').slice(1).join('.') };
 }
 
+/** One-off price (Dalasi) of each store after a merchant's first — mirrors MARISEH_EXTRA_STORE_PRICE on the backend. */
+export const EXTRA_STORE_PRICE = 100;
+
 /** Storefront URL the theme editor embeds; it then streams the draft design in via postMessage. */
 export const previewUrl = (slug: string) => `${STOREFRONT_ORIGIN}/?store=${encodeURIComponent(slug)}&preview=1`;
 
