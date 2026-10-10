@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -11,6 +11,7 @@ import {
 } from '@cp/shared';
 import { Button, Card, Input, Label, cn } from '@cp/ui';
 import { useAuth } from '../auth';
+import { toast } from 'sonner';
 import { useMyStore, selectStoreId, storeAddressParts } from '../platform';
 
 const INDUSTRY_ICONS: Record<string, LucideIcon> = {
@@ -154,12 +155,51 @@ function TemplateMock({ template, color }: { template: TemplateKey; color: strin
   );
 }
 
+// ─── Idle sign-out ────────────────────────────────────────────────────────────
+
+const IDLE_MS = 2 * 60 * 1000;
+const WARN_MS = 20 * 1000;
+
+/**
+ * Someone who signed in (e.g. "Continue with Alfudi") but has no store and
+ * stops using the store wizard is signed out after 2 minutes of inactivity,
+ * instead of being left stuck on this page. Any tap, key or scroll restarts
+ * the countdown; a warning shows 20 seconds before.
+ */
+function useIdleSignOut(enabled: boolean, onTimeout: () => void) {
+  const timeoutRef = useRef(onTimeout);
+  timeoutRef.current = onTimeout;
+
+  useEffect(() => {
+    if (!enabled) return;
+    let warn: ReturnType<typeof setTimeout>;
+    let out: ReturnType<typeof setTimeout>;
+    let warned = false;
+    const reset = () => {
+      clearTimeout(warn); clearTimeout(out);
+      if (warned) { toast.dismiss('idle-signout'); warned = false; }
+      warn = setTimeout(() => {
+        warned = true;
+        toast.warning("Still there? You'll be signed out in 20 seconds unless you continue creating your store.", { id: 'idle-signout', duration: WARN_MS });
+      }, IDLE_MS - WARN_MS);
+      out = setTimeout(() => timeoutRef.current(), IDLE_MS);
+    };
+    const events = ['pointerdown', 'keydown', 'input', 'scroll', 'touchstart'] as const;
+    events.forEach(e => window.addEventListener(e, reset, { passive: true, capture: true }));
+    reset();
+    return () => {
+      clearTimeout(warn); clearTimeout(out);
+      events.forEach(e => window.removeEventListener(e, reset, { capture: true }));
+    };
+  }, [enabled]);
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StartPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { user, loading: authLoading, signUp } = useAuth();
+  const { user, loading: authLoading, signUp, signOut } = useAuth();
   const { data: existing, isLoading: storeLoading } = useMyStore();
   // /start?new=1 — an existing merchant opening another store.
   const [params] = useSearchParams();
@@ -193,6 +233,15 @@ export default function StartPage() {
   const { checking, result, failed: checkFailed } = useSlugCheck(slug);
   const address = storeAddressParts();
   const slugOk = !!result?.available && result.slug === slug;
+
+  // Signed in with no store yet and not using the wizard → sign out after 2 idle minutes.
+  useIdleSignOut(!!user && !storeLoading && !existing && step !== 'creating', () => {
+    toast.dismiss('idle-signout');
+    signOut();
+    qc.clear();
+    toast.info('You were signed out because the store setup was left idle. Sign in again whenever you are ready.');
+    navigate('/login', { replace: true });
+  });
 
   if (authLoading || (user && storeLoading)) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
