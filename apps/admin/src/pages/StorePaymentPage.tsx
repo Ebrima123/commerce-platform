@@ -46,7 +46,7 @@ export default function StorePaymentPage() {
     // Poll until ModemPay's confirmation has created the store.
     refetchInterval: q => {
       const s = q.state.data?.status;
-      return s === 'completed' || (s === 'paid' && q.state.data?.error) || gaveUp ? false : 2500;
+      return s === 'completed' || s === 'cancelled' || (s === 'paid' && q.state.data?.error) || gaveUp ? false : 2500;
     },
     // Keep checking even if the merchant switched apps (e.g. back from the Wave app).
     refetchIntervalInBackground: true,
@@ -90,7 +90,7 @@ export default function StorePaymentPage() {
   if (p?.status === 'paid' && p.error === 'slug_taken') return <PickNewAddress purchase={p} onDone={() => qc.invalidateQueries({ queryKey: ['store-purchase', id] })} />;
 
   // Came back via ModemPay's cancel link and nothing was paid.
-  if (cancelled && (!p || p.status === 'pending')) {
+  if ((cancelled && (!p || p.status === 'pending')) || p?.status === 'cancelled') {
     return (
       <Shell>
         <XCircle className="mx-auto h-10 w-10 text-muted-foreground" />
