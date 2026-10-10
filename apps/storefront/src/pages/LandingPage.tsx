@@ -14,7 +14,7 @@ import { Img, Reveal, WhatsAppIcon } from '../components/primitives';
 // Look: bold black-and-white with the Mariseh green as the accent.
 
 const START = `${ADMIN_ORIGIN}/start`;
-// Example store addresses: shopname.mariseh.com once store subdomains are on, else mariseh.com/@shopname.
+// Example store addresses: shopname.mariseh.com.
 const PLATFORM_DOMAIN = (import.meta.env.VITE_PLATFORM_DOMAIN as string | undefined)?.trim() || 'mariseh.com';
 const storeLink = (name: string) => `${name}.${PLATFORM_DOMAIN}`;
 const SIGN_IN = `${ADMIN_ORIGIN}/login`;
@@ -297,7 +297,6 @@ export default function LandingPage() {
             </p>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
               <StartButton variant="green" />
-              <a href="#styles" className="inline-flex h-12 items-center justify-center gap-2 rounded-full px-7 text-[15px] font-semibold text-white ring-1 ring-white/25 transition-colors hover:bg-white/10 sm:h-14 sm:text-base">See example stores</a>
             </div>
             <ul className="mt-9 flex flex-wrap gap-x-6 gap-y-2 text-[15px] text-zinc-400">
               {['No tech skills needed', 'Works on any phone', 'Ready in minutes'].map(t => (
