@@ -4,12 +4,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ImageIcon, Loader2, Package, Plus, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, ApiError, fmtDalasi, type Paginated, type Product } from '@cp/shared';
-import { Badge, Button, EmptyState, Skeleton } from '@cp/ui';
+import { Button, EmptyState, Skeleton } from '@cp/ui';
 import { PageHeader } from '../components/AdminLayout';
 import { BarButton, FieldRow, FilterPills, ListSection, Sheet, Switch, plainInput } from '../components/ios';
 import { MultiImageInput } from '../design/FieldControls';
 import { useProductChannels, useUpdateProductChannel } from '../platform';
-import { ALFUDI_STATUS } from '../commerce';
 
 type SellerProduct = Product & { published: boolean; sku: string };
 
@@ -88,9 +87,6 @@ export default function ProductsPage() {
                   <p className="mt-0.5 truncate text-[15px] text-muted-foreground">
                     <span className="font-medium text-foreground tabular-nums">{fmtDalasi(p.price)}</span> · {p.stock_quantity} in stock
                   </p>
-                  {channels?.[p.id] && channels[p.id].alfudi_status !== 'alfudi' && (
-                    <Badge tone={ALFUDI_STATUS[channels[p.id].alfudi_status].tone} className="mt-1">{ALFUDI_STATUS[channels[p.id].alfudi_status].label}</Badge>
-                  )}
                 </Link>
                 <Switch checked={live(p)} onChange={() => toggle(p)} disabled={updateChannel.isPending}
                   label={live(p) ? `Hide ${p.name} from store` : `Show ${p.name} in store`} />
