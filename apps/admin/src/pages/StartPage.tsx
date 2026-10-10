@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, ArrowRight, Check, Loader2, Shirt, Smartphone, Flower2, ShoppingBasket, Sofa, Store,
   Sparkles, X, type LucideIcon,
@@ -228,8 +228,12 @@ export default function StartPage() {
   const swatches = [...new Set([...(industry ? INDUSTRIES[industry].colors : []), ...BRAND_SWATCHES])].slice(0, 12);
   const [account, setAccount] = useState({ full_name: '', username: '', email: '', password: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  // Whether the store being created right now is a paid extra one (fixed when creation starts).
-  const payingRef = useRef(false);
+  // Extra stores need a paid unlock first (the first store is free).
+  const unlocks = useQuery({
+    queryKey: ['store-unlocks', user?.id],
+    queryFn: () => api<{ price: number; unlocks_available: number }>('/api/platform/store-purchases/', { auth: true }),
+    enabled: !!user && !!existing,
+  });
 
   useEffect(() => { if (!slugEdited) setSlug(slugify(name)); }, [name, slugEdited]);
   const { checking, result, failed: checkFailed } = useSlugCheck(slug);
@@ -249,28 +253,27 @@ export default function StartPage() {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   }
   if (existing && !addingAnother && step !== 'creating') return <Navigate to="/design" replace />;
+  // Adding another store: pay to unlock it first — the form only opens once it's paid for.
+  if (existing && step !== 'creating') {
+    if (unlocks.isLoading) {
+      return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+    }
+    if ((unlocks.data?.unlocks_available ?? 0) < 1) {
+      return <UnlockStore currentStore={existing.name} price={unlocks.data?.price ?? EXTRA_STORE_PRICE} onUnlocked={() => unlocks.refetch()} />;
+    }
+  }
 
   const steps: Step[] = user ? ['name', 'industry', 'look'] : ['name', 'industry', 'look', 'account'];
   const stepIndex = steps.indexOf(step);
 
-  // The first store is free; every extra one is paid for with ModemPay first.
-  const paid = !!existing;
   const create = async () => {
-    payingRef.current = paid;
     setStep('creating');
     setErrors({});
     try {
       const theme = generateTheme({ storeName: name.trim(), industry: industry ?? 'general', template, primaryColor: color });
       const details = { name: name.trim(), slug, industry: industry ?? 'general', theme, whatsapp: whatsapp.trim() };
-      if (paid) {
-        const { checkout_url } = await api<{ id: string; checkout_url: string }>('/api/platform/store-purchases/', {
-          method: 'POST', auth: true,
-          body: { ...details, return_url: `${window.location.origin}/start/paid`, cancel_url: `${window.location.origin}/start/paid` },
-        });
-        window.location.href = checkout_url; // ModemPay → back to /start/paid?purchase=…
-        return;
-      }
       const created = await api<PlatformStore>('/api/platform/stores/', { method: 'POST', auth: true, body: details });
+      qc.removeQueries({ queryKey: ['store-unlocks'] });
       selectStoreId(created.id);
       qc.removeQueries({ predicate: q => q.queryKey[0] !== 'my-stores' });
       await qc.invalidateQueries({ queryKey: ['my-stores'] });
@@ -309,8 +312,8 @@ export default function StartPage() {
         <div className="relative mb-6 flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg" style={{ background: color }}>
           <Sparkles className="h-6 w-6 animate-pulse" />
         </div>
-        <h1 className="text-xl font-semibold tracking-tight">{payingRef.current ? 'Taking you to payment…' : `Building ${name.trim() || 'your store'}…`}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{payingRef.current ? `Pay D${EXTRA_STORE_PRICE} securely with ModemPay, then we'll build your new store.` : 'Setting up your pages, sections and colours.'}</p>
+        <h1 className="text-xl font-semibold tracking-tight">Building {name.trim() || 'your store'}…</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Setting up your pages, sections and colours.</p>
       </div>
     );
   }
@@ -455,11 +458,10 @@ export default function StartPage() {
             </StepCard>
           )}
 
-          {paid && stepIndex === steps.length - 1 && (
-            <div className="mt-4 rounded-xl border border-border bg-card px-4 py-3 text-sm">
-              <p className="font-medium">This is an extra store: a one-off D{EXTRA_STORE_PRICE}</p>
-              <p className="mt-0.5 text-muted-foreground">Your first store is free. You'll pay securely with ModemPay (Wave, cards and more), then {name.trim() || 'your new store'} is created straight away.</p>
-            </div>
+          {!!existing && stepIndex === 0 && (
+            <p className="mt-4 flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-400">
+              <Check className="h-4 w-4" /> Payment received — set up your new store.
+            </p>
           )}
 
           {errors.form && <p role="alert" className="mt-4 text-sm text-destructive">{errors.form}</p>}
@@ -469,10 +471,64 @@ export default function StartPage() {
               <Button type="button" variant="ghost" onClick={back}><ArrowLeft /> Back</Button>
             ) : <span />}
             <Button type="submit" size="lg" disabled={!canContinue}>
-              {stepIndex === steps.length - 1 ? (paid ? <>Pay D{EXTRA_STORE_PRICE} &amp; create store <Sparkles /></> : <>Create my store <Sparkles /></>) : <>Continue <ArrowRight /></>}
+              {stepIndex === steps.length - 1 ? <>Create my store <Sparkles /></> : <>Continue <ArrowRight /></>}
             </Button>
           </div>
         </form>
+      </main>
+    </div>
+  );
+}
+
+/** Adding another store: pay the one-off fee first; the store form opens once it's paid. */
+function UnlockStore({ currentStore, price, onUnlocked }: { currentStore: string; price: number; onUnlocked: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const pay = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      const back = `${window.location.origin}/start/paid`;
+      const { checkout_url } = await api<{ id: string; checkout_url: string }>('/api/platform/store-purchases/', {
+        method: 'POST', auth: true, body: { return_url: back, cancel_url: back },
+      });
+      window.location.href = checkout_url; // ModemPay → back to /start/paid?purchase=…
+    } catch (e) {
+      // Already paid (e.g. in another tab)? Then the form is unlocked.
+      if (e instanceof ApiError && (e.body as { unlocked?: boolean } | null)?.unlocked) { onUnlocked(); return; }
+      setError(e instanceof ApiError ? e.message : 'Could not start the payment. Please try again.');
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-muted/40">
+      <header className="flex h-16 items-center justify-between px-4 sm:px-8">
+        <Link to="/" className="flex items-center gap-2 text-sm font-semibold">
+          <img src="/mariseh-logo.png" alt="" className="h-8 w-8" />
+          Mariseh
+        </Link>
+        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">Back to {currentStore}</Link>
+      </header>
+      <main className="mx-auto max-w-lg px-4 pb-16 pt-6 sm:pt-12">
+        <Card className="p-6 text-center sm:p-8">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand"><Store className="h-7 w-7" /></span>
+          <h1 className="mt-5 text-2xl font-semibold tracking-tight">Add another store</h1>
+          <p className="mt-2 text-muted-foreground">
+            Your first store is free. Each extra store is a one-off <span className="font-semibold text-foreground">D{price.toLocaleString()}</span>. Pay first, then set up your new store straight away.
+          </p>
+          <ul className="mx-auto mt-6 max-w-xs space-y-2 text-left text-sm">
+            {['Its own address: yourname.mariseh.com', 'Separate products, orders and design', 'Manage every store from one account'].map(t => (
+              <li key={t} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />{t}</li>
+            ))}
+          </ul>
+          {error && <p role="alert" className="mt-5 text-sm text-destructive">{error}</p>}
+          <Button size="lg" className="mt-7 w-full" onClick={pay} disabled={busy}>
+            {busy ? <Loader2 className="animate-spin" /> : <>Pay D{price.toLocaleString()} to unlock</>}
+          </Button>
+          <p className="mt-3 text-xs text-muted-foreground">Secure payment with ModemPay (Wave, cards and more). You'll come straight back here to set up your store.</p>
+        </Card>
       </main>
     </div>
   );
